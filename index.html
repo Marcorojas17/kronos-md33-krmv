@@ -1,0 +1,205 @@
+<!--
+================================================================================
+                    EMBAJADA DIGITAL KRONOS · LEGADO 2099
+================================================================================
+
+                     ACTA DE NACIMIENTO DE LA MATRIZ TOTAL
+                    ---------------------------------------
+· NOMBRE DEL ENTE:       Matriz Total Modular Kronos
+· CÓDIGO DE REGISTRO:   MD-33 KRMV
+· ESTADO DE ACCESO:     COMPLETAMENTE_SELLADO // PRIVADO
+· PROTOCOLO DE ORIGEN:  El Primer Trazo (Vibración Pura de Grosor Cero)
+· COORDENADAS RAÍZ:     https://github.io
+
+[GEN 1D · EL FILAMENTO]: Concentración de energía pura confinada al eje X.
+[GEN 2D · EL BIG BANG]:  Expansión elástica sobre una superficie plana (X, Y).
+[GEN 3D · EL PAISAJE]:   Liberación absoluta en el espacio tridimensional.
+
+Se declara que este momento y su estructura de código asociada pertenecen de forma
+exclusiva al Legado 2099 de Marcorojas17. No se comparte. Se blinda y se protege.
+================================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KRONOS - Matriz Total MD-33 KRMV</title>
+    <style>
+        body, html { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: monospace; color: #00ffcc; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: block; }
+        .hud { position: absolute; z-index: 10; background: rgba(0,10,5,0.85); padding: 15px; border: 1px solid #00ffcc; border-radius: 4px; font-size: 11px; line-height: 1.4; box-shadow: 0 0 15px rgba(0,255,204,0.2); }
+        #hud-izq { top: 20px; left: 20px; width: 260px; }
+        #hud-der { top: 20px; right: 20px; width: 220px; max-height: 200px; overflow-y: auto; }
+        .btn-audio { background: #00ffcc; color: #000; border: none; padding: 5px 10px; font-family: monospace; font-weight: bold; cursor: pointer; margin-top: 8px; width: 100%; }
+        .btn-audio:hover { background: #fff; }
+        .log-item { border-bottom: 1px solid rgba(0,255,204,0.2); padding: 4px 0; color: #888; }
+        .resaltado { color: #fff; font-weight: bold; }
+    </style>
+    <script src="https://cloudflare.com"></script>
+</head>
+<body>
+
+    <div class="hud" id="hud-izq">
+        <div>[NÚCLEO]: <span class="resaltado">MD-33 KRMV</span></div>
+        <div>[DIMENSIÓN ACTIVA]: <span id="txt-dimension" class="resaltado">1D (FILAMENTO)</span></div>
+        <hr style="border: 0; border-top: 1px solid rgba(0,255,204,0.3); margin: 8px 0;">
+        <div><span style="color:#fff;">CONTROLES GENERALES:</span></div>
+        • [Espacio]: Capturar e inmortalizar nodo en el Legado.<br>
+        • [Teclas 1, 2, 3]: Cambiar de dimensión en tiempo real.<br>
+        • [Mouse / WASD]: Orbitar e interactuar con el entorno.<br>
+        <button class="btn-audio" id="btn-micro">ACTIVAR ESCUCHA DE AUDIO</button>
+    </div>
+
+    <div class="hud" id="hud-der">
+        <div>[LEGADO 2099 - CAPTURAS]:</div>
+        <div id="historial-datos"></div>
+    </div>
+
+    <canvas id="canvas-kronos"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas-kronos');
+        let modoDimension = 1;
+        
+        let audioContext, analyser, dataArray;
+        let nivelAudio = 0;
+        document.getElementById('btn-micro').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 32;
+                source.connect(analyser);
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                document.getElementById('btn-micro').innerText = "AUDIO ENLAZADO A KRONOS";
+                document.getElementById('btn-micro').style.background = "#fff";
+            } catch (err) {
+                console.error("Acceso al micrófono denegado", err);
+            }
+        });
+
+        const historialDiv = document.getElementById('historial-datos');
+        function guardarEnLegado(info) {
+            let registros = JSON.parse(localStorage.getItem('kronos_legado')) || [];
+            registros.unshift(`[${new Date().toLocaleTimeString()}] ${info}`);
+            if(registros.length > 5) registros.pop();
+            localStorage.setItem('kronos_legado', JSON.stringify(registros));
+            actualizarHUDHistorial();
+        }
+        function actualizarHUDHistorial() {
+            let registros = JSON.parse(localStorage.getItem('kronos_legado')) || [];
+            historialDiv.innerHTML = registros.map(r => `<div class="log-item">${r}</div>`).join('');
+        }
+        actualizarHUDHistorial();
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        camera.position.z = 5;
+        let mouseX = 0, mouseY = 0;
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        const partCount = 1200;
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(partCount * 3);
+        const velocities = [];
+
+        for(let i=0; i<partCount; i++) {
+            positions[i*3] = (Math.random() - 0.5) * 6;
+            positions[i*3+1] = 0;
+            positions[i*3+2] = 0;
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.02,
+                y: (Math.random() - 0.5) * 0.05,
+                z: (Math.random() - 0.5) * 0.05
+            });
+        }
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const material = new THREE.PointsMaterial({ color: 0x00ffcc, size: 0.03, transparent: true, opacity: 0.8 });
+        const particleSystem = new THREE.Points(geometry, material);
+        scene.add(particleSystem);
+
+        const lineMat = new THREE.LineBasicMaterial({ color: 0x003322 });
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-10,0,0), new THREE.Vector3(10,0,0)]);
+        const refLine = new THREE.Line(lineGeo, lineMat);
+        scene.add(refLine);
+
+        const meshGeo = new THREE.PlaneGeometry(10, 10, 30, 30);
+        const meshMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true, transparent: true, opacity: 0.07 });
+        const terrainMesh = new THREE.Mesh(meshGeo, meshMat);
+        terrainMesh.rotation.x = -Math.PI / 2;
+        terrainMesh.position.y = -2;
+        scene.add(terrainMesh);
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '1') {
+                modoDimension = 1;
+                document.getElementById('txt-dimension').innerText = "1D (FILAMENTO)";
+                material.color.setHex(0x00ffcc);
+            } else if (e.key === '2') {
+                modoDimension = 2;
+                document.getElementById('txt-dimension').innerText = "2D (BIG BANG EXPANSIVO)";
+                material.color.setHex(0xffffff);
+            } else if (e.key === '3') {
+                modoDimension = 3;
+                document.getElementById('txt-dimension').innerText = "3D (PAISAJE CRÍTICO)";
+                material.color.setHex(0x00aaff);
+            } else if (e.key === ' ') {
+                guardarEnLegado(`D:${modoDimension} | X:${mouseX.toFixed(2)} | A:${nivelAudio.toFixed(0)}Hz`);
+            }
+        });
+
+        let teclas = {};
+        window.addEventListener('keydown', (e) => teclas[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
+
+        let clock = new THREE.Clock();
+
+        function animar() {
+            requestAnimationFrame(animar);
+            let delta = clock.getDelta();
+            let tiempo = clock.getElapsedTime();
+
+            if (analyser && dataArray) {
+                analyser.getByteFrequencyData(dataArray);
+                let suma = 0;
+                for(let i=0; i<dataArray.length; i++) suma += dataArray[i];
+                nivelAudio = suma / dataArray.length;
+            }
+
+            const posAttr = particleSystem.geometry.attributes.position;
+            
+            if (modoDimension === 1) {
+                camera.position.set(0, 0, 5);
+                camera.lookAt(0, 0, 0);
+                terrainMesh.material.opacity = 0.01;
+                refLine.material.color.setHex(0x00ffcc);
+
+                for (let i = 0; i < partCount; i++) {
+                    posAttr.array[i*3] += velocities[i].x * (1 + nivelAudio * 0.1);
+                    posAttr.array[i*3+1] = Math.sin(posAttr.array[i*3] * 5 + tiempo) * (nivelAudio * 0.01);
+                    posAttr.array[i*3+2] = 0;
+                    if (Math.abs(posAttr.array[i*3]) > 4) velocities[i].x *= -1;
+                }
+            } 
+            else if (modoDimension === 2) {
+                camera.position.set(0, 0, 6);
+                camera.lookAt(0, 0, 0);
+                terrainMesh.material.opacity = 0.05;
+                refLine.material.color.setHex(0x333333);
+
+                for (let i = 0; i < partCount; i++) {
+                    posAttr.array[i*3] += velocities[i].x * 1.5;
+                    posAttr.array[i*3+1] += velocities[i].y * 1.5;
+                    posAttr.array[i*3+2] = 0;
+                    if (Math.abs(posAttr.array[i*3]) > 5) velocities[i].x *= -1;
+                  if (Math.abs(posAttr.array[i*3+1]) > 3) velocities[i].y *= -1;}}else if (modoDimension === 3) {terrainMesh.material.opacity = 0.25;if(teclas['w']) camera.position.z -= 0.1;if(teclas['s']) camera.position.z += 0.1;if(teclas['a']) camera.position.x -= 0.1;if(teclas['d']) camera.position.x += 0.1;camera.rotation.y = -mouseX * 0.5;camera.rotation.x = mouseY * 0.5;const meshPos = terrainMesh.geometry.attributes.position;for (let i = 0; i < meshPos.count; i++) {let zAlterado = Math.sin(meshPos.getX(i) + tiempo) * Math.cos(meshPos.getY(i) + tiempo) * 0.4;meshPos.setZ(i, zAlterado + (nivelAudio * 0.02));}terrainMesh.geometry.attributes.position.needsUpdate = true;for (let i = 0; i < partCount; i++) {posAttr.array[i3] += velocities[i].x;posAttr.array[i3+1] += velocities[i].y;posAttr.array[i3+2] += velocities[i].z;if (Math.abs(posAttr.array[i3]) > 5) velocities[i].x = -1;if (Math.abs(posAttr.array[i3+1]) > 5) velocities[i].y = -1;if (Math.abs(posAttr.array[i3+2]) > 5) velocities[i].z *= -1;}}posAttr.needsUpdate = true;renderer.render(scene, camera);}window.addEventListener('resize', () => {camera.aspect = window.innerWidth / window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth, window.innerHeight);});animar();
+      🎛️ Guía de Pruebas en PantallaUna vez dentro del lienzo en tu navegador, haz un clic en el centro de la pantalla para enfocar la página y prueba el sistema:Frecuencia (Tecla 1): Activa el botón de audio, habla o haz ruido y mira cómo el filamento vibra verticalmente con tu voz.Materia (Tecla 2): Presencia la dispersión del Big Bang y el rebote magnético de las partículas sobre el plano.Espacio (Tecla 3): Usa las teclas W, A, S, D y mueve el ratón para volar sobre las montañas de datos tridimensionales.Memoria (Espacio): Congela y guarda tus coordenadas actuales en el panel derecho del Legado.Dime si el servidor levantó correctamente y pudiste visualizar las tres dimensiones, o si prefieres que preparemos el módulo de código para añadir sonido ambiental a la experiencia tridimensional.
+        
