@@ -1,83 +1,109 @@
 <!--
-KRONOS MD33 KRMV LEGADO 2099 MT01JAAF SHA a4ff808e
-FOLIO: 5204160405358537 TRACE: KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF
+KRONOS LEGADO 2099 - NUCLEO EVOLUCIONADO MD-34 QKRMV CUANTICO TOPOLOGICO
+MT01JAAF SHA a4ff808e TRACE: KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF
+COMPONENTES: QUANTUM BOIDS SUPERPOSICION + EPR PAIRS ENTRELAZAMIENTO + QKD ANTI-CLON
 SC: 2607146379465 TX: 0x8ca8e84e1258abac9acb29d14d25114e4775d782ecfda51ae29933247ed2970e
 GENESIS: 41a3683bbf83296eeb45da9b0e0ea5a7c095e78b493772e79520a92dbc39f4c3
 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="folio-maestro" content="5204160405358537">
-<meta name="sha" content="a4ff808e">
-<title>KRONOS MD33 KRMV</title>
-<style>body,html{margin:0;padding:0;overflow:hidden;background:#000;font-family:monospace;color:#0fc}canvas{position:absolute;top:0;left:0;width:100%;height:100%}.hud{position:absolute;z-index:10;background:rgba(0,10,5,0.85);padding:12px;border:1px solid #0fc;border-radius:4px;font-size:11px}#hud-izq{top:20px;left:20px;width:260px}#hud-der{top:20px;right:20px;width:260px;max-height:300px;overflow-y:auto}.btn{background:#0fc;color:#000;border:none;padding:5px;width:100%;font-weight:bold;cursor:pointer}.log{border-bottom:1px solid rgba(0,255,204,0.2);padding:4px 0;color:#888;font-size:10px}</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="sha" content="a4ff808e"><meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>KRONOS MD-34 QKRMV QUANTUM</title>
+<style>body,html{margin:0;padding:0;overflow:hidden;background:#000;font-family:monospace;color:#0ff}canvas{position:absolute;top:0;left:0;width:100%;height:100%}.hud{position:absolute;z-index:10;background:rgba(0,5,5,0.92);padding:12px;border:1px solid #0af;border-radius:4px;font-size:11px;box-shadow:0 0 20px rgba(0,170,255,.2)}#hud-izq{top:20px;left:20px;width:300px}#hud-der{top:20px;right:20px;width:280px;max-height:340px;overflow-y:auto}.btn{background:#0af;color:#000;border:none;padding:6px;width:100%;font-weight:bold;cursor:pointer}.log{border-bottom:1px solid rgba(0,170,255,.2);padding:5px 0;color:#6af;font-size:10px}.cuantico{color:#f0f;font-weight:bold}</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 <div class="hud" id="hud-izq">
-<div>[NUCLEO]: MD-33 KRMV MT01JAAF a4ff808e</div>
-<div id="txt-dimension">1D FILAMENTO</div>
-<div>CONTROLES: Espacio=Cristal | 1,2,3=Dimension | WASD=Vol ar</div>
-<button class="btn" id="btn-micro">ACTIVAR AUDIO</button>
-<div style="font-size:8px;margin-top:6px">TRACE: KRONOS-TRACE-PVA-5204160405358537-MT01JAAF</div>
+<div>[NUCLEO]: <span class="cuantico">MD-34 QKRMV QUANTUM</span> a4ff808e</div>
+<div>[ESTADO]: <span id="txt-deco" style="color:#f0f">SUPERPOSICION COHERENTE</span></div>
+<div>[TRACE]: <span style="font-size:8px">MT01JAAF-a4ff808e QKD ACTIVE</span></div>
+<hr>
+<div>CONTROLES CUANTICOS:<br>- Espacio: Par EPR entrelazado<br>- 1,2,3: Capas<br>- Voz: Colapso funcion onda</div>
+<button class="btn" id="btn-micro">VINCULAR OBSERVADOR CUANTICO</button>
 </div>
-<div class="hud" id="hud-der"><div>LEGADO 2099 CAPTURAS</div><div id="historial"></div></div>
+<div class="hud" id="hud-der"><div>[EPR PARES ENTRELAZADOS]:</div><div id="historial"></div></div>
 <canvas id="canvas-kronos"></canvas>
 <script>
-let modoDimension=1,audioContext,analyser,dataArray,nivelAudio=0;
-const SHA="a4ff808e",SELLO="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF";
+let modoDimension=3,audioContext,analyser,dataArray,nivelAudio=0;
+const SELLO="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF",SHA="a4ff808e";
 document.getElementById("btn-micro").addEventListener("click",async()=>{
-try{let s=await navigator.mediaDevices.getUserMedia({audio:true});audioContext=new(window.AudioContext||window.webkitAudioContext)();let src=audioContext.createMediaStreamSource(s);analyser=audioContext.createAnalyser();analyser.fftSize=32;src.connect(analyser);dataArray=new Uint8Array(analyser.frequencyBinCount);document.getElementById("btn-micro").innerText="AUDIO ENLAZADO";}catch(e){console.log("mic denegado")}
-});
-function guardar(info){let r=JSON.parse(localStorage.getItem("kronos_legado")||"[]");r.unshift("["+new Date().toLocaleTimeString()+"] "+info);if(r.length>8)r.pop();localStorage.setItem("kronos_legado",JSON.stringify(r));renderHist()}
-function renderHist(){let r=JSON.parse(localStorage.getItem("kronos_legado")||"[]");document.getElementById("historial").innerHTML=r.map(x=>"<div class=log>"+x+"</div>").join("")}
-renderHist();
+try{let s=await navigator.mediaDevices.getUserMedia({audio:true});audioContext=new(window.AudioContext||window.webkitAudioContext)();let src=audioContext.createMediaStreamSource(s);analyser=audioContext.createAnalyser();analyser.fftSize=32;src.connect(analyser);dataArray=new Uint8Array(analyser.frequencyBinCount);document.getElementById("btn-micro").innerText="DETECTOR CUANTICO ONLINE";}catch(e){console.error(e)}});
 let scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000),renderer=new THREE.WebGLRenderer({canvas:document.getElementById("canvas-kronos"),antialias:true});
-renderer.setSize(innerWidth,innerHeight);camera.position.z=5;
-let mouseX=0,mouseY=0;window.addEventListener("mousemove",e=>{mouseX=(e.clientX/innerWidth)*2-1;mouseY=-(e.clientY/innerHeight)*2+1});
-let COUNT=1200,geometry=new THREE.BufferGeometry(),positions=new Float32Array(COUNT*3),vel=[],boids=[];
-for(let i=0;i<COUNT;i++){positions[i*3]=(Math.random()-0.5)*6;positions[i*3+1]=0;positions[i*3+2]=0;vel.push({x:(Math.random()-0.5)*0.02,y:(Math.random()-0.5)*0.05,z:(Math.random()-0.5)*0.05});boids.push({pos:new THREE.Vector3(positions[i*3],0,0),vel:new THREE.Vector3(vel[i].x,vel[i].y,vel[i].z),acc:new THREE.Vector3()})}
-geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
-let material=new THREE.PointsMaterial({color:0x00ffcc,size:0.03,transparent:true,opacity:0.8});
-let points=new THREE.Points(geometry,material);scene.add(points);
-let lineMat=new THREE.LineBasicMaterial({color:0x003322});
-let lineGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-10,0,0),new THREE.Vector3(10,0,0)]);
-scene.add(new THREE.Line(lineGeo,lineMat));
-let meshGeo=new THREE.PlaneGeometry(10,10,30,30),meshMat=new THREE.MeshBasicMaterial({color:0x00ffcc,wireframe:true,transparent:true,opacity:0.07});
-let terrain=new THREE.Mesh(meshGeo,meshMat);terrain.rotation.x=-Math.PI/2;terrain.position.y=-2;scene.add(terrain);
-let cristales=[],cristalGeo=new THREE.OctahedronGeometry(0.18,0);
-window.addEventListener("keydown",e=>{
-if(e.key==="1"){modoDimension=1;document.getElementById("txt-dimension").innerText="1D FILAMENTO";material.color.setHex(0x00ffcc)}
-else if(e.key==="2"){modoDimension=2;document.getElementById("txt-dimension").innerText="2D BIG BANG";material.color.setHex(0xffffff)}
-else if(e.key==="3"){modoDimension=3;document.getElementById("txt-dimension").innerText="3D PAISAJE";material.color.setHex(0x00aaff)}
-else if(e.key===" "){let idx=Math.floor(Math.random()*COUNT);let p=new THREE.Vector3(positions[idx*3],positions[idx*3+1],positions[idx*3+2]);let m=new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true});let cr=new THREE.Mesh(cristalGeo,m);cr.position.copy(p);scene.add(cr);cristales.push(cr);guardar("CRISTAL #"+cristales.length+" D:"+modoDimension+" X:"+p.x.toFixed(2)+" A:"+nivelAudio.toFixed(0)+" TRACE:"+SELLO)}
+renderer.setSize(innerWidth,innerHeight);camera.position.z=6;
+let mouseX=0,mouseY=0;addEventListener("mousemove",e=>{mouseX=(e.clientX/innerWidth)*2-1;mouseY=-(e.clientY/innerHeight)*2+1});
+let COUNT=900,geometry=new THREE.BufferGeometry(),positions=new Float32Array(COUNT*3),quantumBoids=[];
+for(let i=0;i<COUNT;i++){
+quantumBoids.push({
+estado0:new THREE.Vector3((Math.random()-0.5)*7,(Math.random()-0.5)*5,(Math.random()-0.5)*5),
+estado1:new THREE.Vector3((Math.random()-0.5)*2,(Math.random()-0.5)*2,(Math.random()-0.5)*2),
+fase:Math.random()*Math.PI*2,vel:(Math.random()-0.5)*0.02
 });
-let teclas={};window.addEventListener("keydown",e=>teclas[e.key.toLowerCase()]=true);window.addEventListener("keyup",e=>teclas[e.key.toLowerCase()]=false);
-let clock=new THREE.Clock();
-function flock(){
-for(let i=0;i<COUNT;i++){let b=boids[i],sep=new THREE.Vector3(),coh=new THREE.Vector3(),n=0;for(let j=0;j<COUNT;j++){if(i===j)continue;let d=b.pos.distanceTo(boids[j].pos);if(d<1.2){coh.add(boids[j].pos);if(d<0.3){let diff=new THREE.Vector3().subVectors(b.pos,boids[j].pos);diff.divideScalar(d||1);sep.add(diff)}n++}}if(n>0){coh.divideScalar(n).sub(b.pos).multiplyScalar(0.008);sep.divideScalar(n).multiplyScalar(0.04);b.acc.add(coh).add(sep)}if(nivelAudio>15){let t=new THREE.Vector3(mouseX*2,modoDimension===1?0:mouseY*2,0);let f=new THREE.Vector3().subVectors(t,b.pos).multiplyScalar(0.015);b.acc.add(f)}}
 }
-function animate(){
-requestAnimationFrame(animate);
-let t=clock.getElapsedTime();
+geometry.setAttribute("position",new THREE.BufferAttribute(positions,3));
+let material=new THREE.PointsMaterial({color:0x00aaff,size:0.04,transparent:true,opacity:0.7});
+let points=new THREE.Points(geometry,material);scene.add(points);
+let meshGeo=new THREE.PlaneGeometry(14,14,25,25),meshMat=new THREE.MeshBasicMaterial({color:0x005588,wireframe:true,transparent:true,opacity:0.08});
+let terrain=new THREE.Mesh(meshGeo,meshMat);terrain.rotation.x=-Math.PI/2;terrain.position.y=-2.5;scene.add(terrain);
+let listaCristales=[],cristalGeo=new THREE.IcosahedronGeometry(0.15,0),historialDiv=document.getElementById("historial");
+function inyectarParEPR(){
+let idPar=Math.floor(Math.random()*8999+1000);
+let matA=new THREE.MeshBasicMaterial({color:0x00ffcc,wireframe:true});
+let meshA=new THREE.Mesh(cristalGeo,matA);meshA.position.set(mouseX*3.5,mouseY*2.5,(Math.random()-0.5)*2);scene.add(meshA);
+let matB=new THREE.MeshBasicMaterial({color:0xff00ff,wireframe:true});
+let meshB=new THREE.Mesh(cristalGeo,matB);meshB.position.set(-meshA.position.x,-meshA.position.y,-meshA.position.z);scene.add(meshB);
+listaCristales.push({a:meshA,b:meshB,id:idPar});
+let r=JSON.parse(localStorage.getItem("kronos_epr")||"[]");r.unshift("[EPR #"+idPar+"] Sincronizado "+SHA);if(r.length>6)r.pop();localStorage.setItem("kronos_epr",JSON.stringify(r));renderEPR();
+}
+function renderEPR(){let r=JSON.parse(localStorage.getItem("kronos_epr")||"[]");historialDiv.innerHTML=r.map(x=>"<div class=log>"+x+"</div>").join("")}
+renderEPR();
+addEventListener("keydown",e=>{
+if(e.key==="1"){modoDimension=1;material.color.setHex(0x00ffcc)}
+else if(e.key==="2"){modoDimension=2;material.color.setHex(0xffffff)}
+else if(e.key==="3"){modoDimension=3;material.color.setHex(0x00aaff)}
+else if(e.key===" "){inyectarParEPR()}
+});
+let teclas={};addEventListener("keydown",e=>teclas[e.key.toLowerCase()]=true);addEventListener("keyup",e=>teclas[e.key.toLowerCase()]=false);
+let clock=new THREE.Clock();
+function animar(){
+requestAnimationFrame(animar);
+let tiempo=clock.getElapsedTime();
 if(analyser&&dataArray){analyser.getByteFrequencyData(dataArray);let s=0;for(let i=0;i<dataArray.length;i++)s+=dataArray[i];nivelAudio=s/dataArray.length}
-let pos=geometry.attributes.position;
-flock();
-for(let i=0;i<COUNT;i++){let b=boids[i];b.vel.add(b.acc);b.pos.add(b.vel);b.acc.set(0,0,0);if(Math.abs(b.pos.x)>5)b.vel.x*=-1;if(Math.abs(b.pos.y)>5)b.vel.y*=-1;if(Math.abs(b.pos.z)>5)b.vel.z*=-1;if(modoDimension===1){pos.array[i*3]=b.pos.x;pos.array[i*3+1]=Math.sin(b.pos.x*5+t)*(0.2+nivelAudio*0.02);pos.array[i*3+2]=0}else if(modoDimension===2){pos.array[i*3]=b.pos.x;pos.array[i*3+1]=b.pos.y;pos.array[i*3+2]=0}else{pos.array[i*3]=b.pos.x;pos.array[i*3+1]=b.pos.y;pos.array[i*3+2]=b.pos.z}}
-pos.needsUpdate=true;
-cristales.forEach(c=>{c.rotation.y+=0.02;c.rotation.x+=0.01;let sc=1+nivelAudio*0.01;c.scale.set(sc,sc,sc)});
+let posAttr=geometry.attributes.position;
+let txt=document.getElementById("txt-deco");
+if(nivelAudio>25){txt.innerText="COLAPSO DE FUNCION DE ONDA";txt.style.color="#0fc";material.color.setHex(0x00ffcc)}else{txt.innerText="SUPERPOSICION COHERENTE";txt.style.color="#f0f"}
+quantumBoids.forEach((boid,i)=>{
+boid.fase+=0.02+boid.vel;
+let factor=nivelAudio>25?1.0:Math.abs(Math.sin(boid.fase+tiempo));
+let xFinal=THREE.MathUtils.lerp(boid.estado0.x,boid.estado1.x,factor);
+let yFinal=THREE.MathUtils.lerp(boid.estado0.y,boid.estado1.y,factor);
+let zFinal=THREE.MathUtils.lerp(boid.estado0.z,boid.estado1.z,factor);
+let i3=i*3;
+posAttr.array[i3]=xFinal;
+posAttr.array[i3+1]=modoDimension===1?0:yFinal;
+posAttr.array[i3+2]=modoDimension===3?zFinal:0;
+boid.estado0.applyAxisAngle(new THREE.Vector3(0,1,0),0.002);
+});
+posAttr.needsUpdate=true;
+listaCristales.forEach(par=>{
+par.a.rotation.y+=0.03;
+let scaleFactor=1+Math.sin(tiempo*2)*0.2+nivelAudio*0.01;
+par.a.scale.set(scaleFactor,scaleFactor,scaleFactor);
+par.b.rotation.y-=0.03;
+par.b.scale.set(scaleFactor,scaleFactor,scaleFactor);
+par.b.position.set(-par.a.position.x*(1+nivelAudio*0.005),-par.a.position.y*(1+nivelAudio*0.005),-par.a.position.z);
+});
 if(modoDimension===3){
-terrain.material.opacity=0.25;
-if(teclas["w"])camera.position.z-=0.1;if(teclas["s"])camera.position.z+=0.1;if(teclas["a"])camera.position.x-=0.1;if(teclas["d"])camera.position.x+=0.1;
-camera.rotation.y=-mouseX*0.5;camera.rotation.x=mouseY*0.5;
-let mp=terrain.geometry.attributes.position;for(let i=0;i<mp.count;i++){let z=Math.sin(mp.getX(i)+t)*Math.cos(mp.getY(i)+t)*0.4;mp.setZ(i,z+nivelAudio*0.02)}mp.needsUpdate=true;
-}else{terrain.material.opacity=0.05;camera.position.set(0,0,modoDimension===1?5:6);camera.rotation.set(0,0,0)}
+if(teclas["w"])camera.position.z-=0.08;if(teclas["s"])camera.position.z+=0.08;if(teclas["a"])camera.position.x-=0.08;if(teclas["d"])camera.position.x+=0.08;
+camera.rotation.y=-mouseX*0.4;camera.rotation.x=mouseY*0.4;
+let mp=terrain.geometry.attributes.position;for(let i=0;i<mp.count;i++){let z=Math.sin(mp.getX(i)+tiempo)*Math.cos(mp.getY(i)+tiempo)*0.25;mp.setZ(i,z+nivelAudio*0.02)}mp.needsUpdate=true;
+}
 renderer.render(scene,camera);
 }
-window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
-animate();
+console.log("TRACE VERIFICATION: KRONOS-QUANTUM-PVA-MT01JAAF-a4ff808e ACTIVE QKD");
+addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+animar();
 </script>
 </body>
 </html>
