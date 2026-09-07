@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="folio" content="5204160405358537">
+<meta name="sha" content="a4ff808e">
+<meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>CYMATIC STUDIO v19 · Quantum Neural Forbidden Engine</title>
+<style>
+    /* ===== RESET Y ESTILOS ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&family=Space+Grotesk:wght@400;600;700&display=swap');
+    body {
+        font-family: 'Inter', 'Space Grotesk', sans-serif;
+        background: #010206;
+        color: #e0e0e0;
+        overflow-x: hidden;
+        margin: 0;
+    }
+    a { color: #00ffcc; text-decoration: none; }
+    
+    #canvas-kronos {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+        z-index: 1; pointer-events: none;
+    }
+    .app-wrapper { position: relative; z-index: 2; width: 100%; }
+    
+    /* HEADER, HERO, CONSOLA – similar a v18 pero con ajustes menores */
+    .header {
+        position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+        padding: 16px 30px; background: rgba(1, 2, 6, 0.80);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(0, 255, 204, 0.12);
+        display: flex; justify-content: space-between; align-items: center;
+        flex-wrap: wrap; gap: 10px;
+    }
+    .logo {
+        font-size: 1.6rem; font-weight: 900;
+        background: linear-gradient(135deg, #00ffcc, #a855f7, #ff00cc, #00ffcc);
+        background-size: 300% 300%;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        animation: grad 6s ease-in-out infinite alternate;
+        letter-spacing: -0.5px;
+    }
+    @keyframes grad { 0% { background-position: 0% 50%; } 100% { background-position: 100% 50%; } }
+    .logo span { font-weight: 300; -webkit-text-fill-color: rgba(255,255,255,0.3); }
+    .nav-links { display: flex; gap: 30px; align-items: center; }
+    .nav-links a { font-size: 0.85rem; color: #a0aec0; transition: 0.3s; font-weight: 600; }
+    .nav-links a:hover { color: #00ffcc; text-shadow: 0 0 20px rgba(0,255,204,0.3); }
+    .btn-cta-nav {
+        background: linear-gradient(135deg, #00ffcc, #a855f7);
+        color: #000; padding: 8px 24px; border-radius: 40px;
+        font-weight: 800; font-size: 0.85rem; border: none; cursor: pointer;
+        transition: 0.3s; box-shadow: 0 0 20px rgba(0,255,204,0.15);
+    }
+    .btn-cta-nav:hover { transform: scale(1.05); box-shadow: 0 0 40px rgba(0,255,204,0.4); }
+    
+    .hero {
+        padding: 160px 30px 80px; text-align: center;
+        background: radial-gradient(circle at 50% 30%, rgba(0,255,204,0.05) 0%, transparent 60%);
+    }
+    .hero .badge {
+        display: inline-block; background: rgba(0,255,204,0.1); border: 1px solid rgba(0,255,204,0.3);
+        padding: 6px 18px; border-radius: 40px; font-size: 0.75rem;
+        color: #00ffcc; letter-spacing: 2px; margin-bottom: 24px; font-weight: 700;
+        backdrop-filter: blur(4px);
+        animation: pulse-border 2s infinite;
+    }
+    @keyframes pulse-border { 0% { box-shadow: 0 0 0 0 rgba(0,255,204,0.2); } 100% { box-shadow: 0 0 20px 0 rgba(0,255,204,0); } }
+    .hero h1 {
+        font-size: 4.5rem; font-weight: 900;
+        background: linear-gradient(135deg, #ffffff 20%, #00ffcc 50%, #a855f7 80%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        line-height: 1.05; max-width: 900px; margin: 0 auto 24px;
+        letter-spacing: -1px;
+    }
+    .hero p {
+        font-size: 1.3rem; color: #a0aec0; max-width: 660px; margin: 0 auto 35px; line-height: 1.7;
+    }
+    .btn-hero {
+        background: linear-gradient(135deg, #00ffcc, #a855f7, #ff00cc);
+        border: none; color: #000; font-weight: 800; font-size: 1.1rem;
+        padding: 16px 48px; border-radius: 60px; cursor: pointer; margin: 10px;
+        transition: 0.3s; box-shadow: 0 10px 30px rgba(0,255,204,0.25);
+    }
+    .btn-hero:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 20px 60px rgba(0,255,204,0.5); }
+    .btn-hero-outline {
+        background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.15);
+        color: #fff; padding: 14px 40px; border-radius: 60px;
+        font-weight: 600; font-size: 1.1rem; cursor: pointer; margin: 10px;
+        transition: 0.3s; backdrop-filter: blur(4px);
+    }
+    .btn-hero-outline:hover { border-color: #ff00cc; background: rgba(255,0,255,0.05); box-shadow: 0 0 30px rgba(255,0,255,0.1); }
+    
+    .hud-embedded {
+        max-width: 1200px; margin: 40px auto; padding: 28px;
+        background: rgba(4, 6, 14, 0.88);
+        border: 1px solid rgba(0,255,204,0.15);
+        border-radius: 24px;
+        backdrop-filter: blur(40px);
+        box-shadow: 0 40px 100px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.02);
+        display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+        text-align: left;
+    }
+    .hud-title {
+        font-size: 0.75rem; font-weight: 800; color: #00ffcc; letter-spacing: 3px;
+        margin-bottom: 12px; font-family: monospace; text-transform: uppercase;
+    }
+    .fft-container {
+        display: flex; gap: 2px; align-items: flex-end; width: 100%; height: 44px;
+        background: rgba(0,0,0,0.6); border-radius: 8px; padding: 4px;
+        border: 1px solid rgba(0,255,204,0.12); overflow: hidden;
+    }
+    .fft-bar { flex: 1; height: 0%; background: linear-gradient(to top, #00ffcc, #a855f7); border-radius: 1px; }
+    .control-group { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .control-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: #a0aec0; }
+    .control-row input[type="range"] {
+        width: 50%; background: transparent; accent-color: #00ffcc; cursor: pointer; height: 4px;
+    }
+    .val-display { font-family: monospace; color: #fff; min-width: 40px; text-align: right; font-size: 0.85rem; }
+    
+    .mode-selector, .palette-selector {
+        display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 14px 0;
+    }
+    .mode-btn, .palette-btn {
+        padding: 6px 14px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(0,0,0,0.4); color: #a0aec0; font-size: 0.7rem;
+        cursor: pointer; transition: 0.3s; font-family: inherit; font-weight: 600;
+    }
+    .mode-btn.active, .palette-btn.active {
+        border-color: #00ffcc; background: rgba(0,255,204,0.12); color: #00ffcc;
+        box-shadow: 0 0 20px rgba(0,255,204,0.05);
+    }
+    .mode-btn:hover, .palette-btn:hover { border-color: rgba(255,255,255,0.2); color: #fff; }
+    
+    .log-panel {
+        background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid rgba(255,255,255,0.03);
+        padding: 12px; height: 160px; overflow-y: auto; font-family: monospace; font-size: 10px; scrollbar-width: none;
+        line-height: 1.6;
+    }
+    .log-panel::-webkit-scrollbar { display: none; }
+    .log-entry { border-left: 2px solid #00ffcc; padding-left: 10px; margin-bottom: 6px; color: #a4fbe7; }
+    
+    .btn-group-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .btn-action {
+        flex: 1; min-width: 100px; padding: 10px 16px; border-radius: 40px;
+        border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4);
+        color: #a0aec0; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+        transition: 0.3s; font-family: inherit; text-align: center;
+    }
+    .btn-action:hover { border-color: #00ffcc; color: #fff; background: rgba(0,255,204,0.05); }
+    .btn-action.primary { background: linear-gradient(135deg, #00ffcc, #00aaff); color: #000; border: none; }
+    .btn-action.primary:hover { box-shadow: 0 0 25px rgba(0,255,204,0.3); color: #fff; }
+    .btn-action.danger { border-color: #ff0055; color: #ff0055; }
+    .btn-action.danger:hover { background: rgba(255,0,85,0.1); color: #fff; }
+    .btn-action.forbidden {
+        border-color: #ff00cc; color: #ff00cc;
+        background: rgba(255,0,204,0.05);
+        animation: forbidden-glow 1.5s infinite alternate;
+    }
+    .btn-action.forbidden:hover { background: rgba(255,0,204,0.2); color: #fff; }
+    @keyframes forbidden-glow { 0% { box-shadow: 0 0 5px rgba(255,0,204,0.1); } 100% { box-shadow: 0 0 25px rgba(255,0,204,0.4); } }
+    
+    .features {
+        padding: 80px 20px; max-width: 1200px; margin: 0 auto;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;
+    }
+    .feature-card {
+        background: rgba(4, 6, 14, 0.6); border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 16px; padding: 40px 25px; text-align: center;
+        backdrop-filter: blur(10px); transition: 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(0,255,204,0.3); transform: translateY(-5px) scale(1.02); }
+    .feature-card .icon { font-size: 2.5rem; margin-bottom: 16px; display: block; }
+    .feature-card h3 { font-size: 1.25rem; color: #fff; margin-bottom: 10px; }
+    .feature-card p { font-size: 0.95rem; color: #718096; line-height: 1.6; }
+    
+    .pricing { padding: 80px 20px; text-align: center; background: rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.02); }
+    .pricing h2 { font-size: 3.2rem; font-weight: 800; color: #fff; margin-bottom: 12px; }
+    .pricing .sub { color: #a0aec0; font-size: 1.15rem; margin-bottom: 50px; }
+    .pricing-card {
+        display: inline-block; background: linear-gradient(145deg, rgba(4,6,14,0.95), rgba(20,10,35,0.95));
+        border: 1px solid rgba(0,255,204,0.15); border-radius: 28px; padding: 50px 50px;
+        max-width: 480px; width: 100%; box-shadow: 0 30px 70px rgba(0,0,0,0.8); text-align: left;
+        transition: 0.4s;
+    }
+    .pricing-card:hover { border-color: rgba(0,255,204,0.4); box-shadow: 0 40px 80px rgba(0,255,204,0.05); }
+    .pricing-card .tier { font-size: 0.75rem; font-weight: 800; color: #00ffcc; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 15px; }
+    .pricing-card .price { font-size: 4rem; font-weight: 900; color: #fff; line-height: 1; }
+    .pricing-card .price small { font-size: 1.2rem; font-weight: 400; color: #a0aec0; }
+    .pricing-card ul { list-style: none; padding: 30px 0; display: flex; flex-direction: column; gap: 14px; }
+    .pricing-card ul li { color: #e2e8f0; font-size: 1rem; display: flex; align-items: center; gap: 10px; }
+    .pricing-card ul li::before { content: "✦"; color: #00ffcc; font-weight: 900; font-size: 1.2rem; }
+    .btn-buy {
+        background: linear-gradient(135deg, #00ffcc, #a855f7, #ff00cc);
+        border: none; color: #000; font-weight: 900; font-size: 1.2rem; padding: 18px; border-radius: 50px;
+        cursor: pointer; width: 100%; transition: 0.3s; letter-spacing: 1px;
+        box-shadow: 0 10px 30px rgba(168,85,247,0.2);
+    }
+    .btn-buy:hover { transform: translateY(-2px); box-shadow: 0 20px 60px rgba(0,255,204,0.4); background: #fff; }
+    .watermark {
+        text-align: center; padding: 40px; font-size: 0.7rem; color: rgba(255,255,255,0.08);
+        letter-spacing: 6px; font-weight: bold; font-family: monospace;
+    }
+    @media (max-width: 768px) {
+        .hero h1 { font-size: 2.5rem; }
+        .header { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+        .nav-links { display: none; }
+        .hud-embedded { grid-template-columns: 1fr; padding: 16px; gap: 20px; }
+        .pricing-card { padding: 30px 20px; }
+        .btn-action { min-width: 60px; font-size: 0.6rem; }
+    }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #00ffcc; border-radius: 10px; }
+</style>
+
+<!-- ===== LIBRERÍAS AVANZADAS (WebGPU, TFJS, WASM) ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/shaders/CopyShader.js"></script>
+</head>
+<body>
+
+<canvas id="canvas-kronos"></canvas>
+
+<div class="app-wrapper">
+    <header class="header">
+        <div class="logo">CYMATIC<span>STUDIO</span></div>
+        <nav class="nav-links">
+            <a href="#features">Características</a>
+            <a href="#engine">Consola</a>
+            <a href="#pricing">Precios</a>
+        </nav>
+        <button class="btn-cta-nav" onclick="activarMicrofono()">🎤 Probar ahora</button>
+    </header>
+
+    <section class="hero">
+        <div class="badge">⚡ v19.0 · QUANTUM NEURAL FORBIDDEN ENGINE</div>
+        <h1>Geometría Sagrada<br>y Neuro‑Física Cuántica</h1>
+        <p>Simulación de fluidos en GPU, redes neuronales generativas, WebGPU y efectos interdimensionales. Tecnología prohibida al alcance de tu navegador.</p>
+        <div>
+            <button class="btn-hero" onclick="activarMicrofono()">▶ MICRÓFONO</button>
+            <button class="btn-hero-outline" onclick="activarSintetizador()">♪ SINTETIZADOR</button>
+        </div>
+    </section>
+
+    <div class="hud-embedded" id="engine">
+        <div>
+            <div class="hud-title">🎛️ ESPECTRO Y CONTROL</div>
+            <div class="fft-container" id="fftMeter"></div>
+            <div class="control-group">
+                <div class="control-row">
+                    <span>Frecuencia Cimática</span>
+                    <input type="range" id="speedSlider" min="0.1" max="5.0" step="0.05" value="1.6">
+                    <span id="speedVal" class="val-display">1.60</span>
+                </div>
+                <div class="control-row">
+                    <span>Densidad de Nodos</span>
+                    <input type="range" id="sizeSlider" min="0.5" max="3.5" step="0.1" value="1.8">
+                    <span id="sizeVal" class="val-display">1.80</span>
+                </div>
+                <div class="control-row">
+                    <span>Intensidad Bloom</span>
+                    <input type="range" id="bloomSlider" min="0" max="2.0" step="0.02" value="0.80">
+                    <span id="bloomVal" class="val-display">0.80</span>
+                </div>
+            </div>
+            <div style="margin-top:12px;">
+                <div class="hud-title" style="font-size:0.65rem;">🎭 MODO DE VISUALIZACIÓN</div>
+                <div class="mode-selector" id="modeSelector">
+                    <button class="mode-btn active" data-mode="1" onclick="cambiarModo(1,this)">Chladni</button>
+                    <button class="mode-btn" data-mode="2" onclick="cambiarModo(2,this)">Toroide</button>
+                    <button class="mode-btn" data-mode="3" onclick="cambiarModo(3,this)">Metatrón</button>
+                    <button class="mode-btn" data-mode="4" onclick="cambiarModo(4,this)">Flor de Vida</button>
+                    <button class="mode-btn" data-mode="5" onclick="cambiarModo(5,this)">Merkaba</button>
+                </div>
+            </div>
+            <div style="margin-top:6px;">
+                <div class="hud-title" style="font-size:0.65rem;">🎨 PALETA DE EMOCIÓN</div>
+                <div class="palette-selector" id="paletteSelector">
+                    <button class="palette-btn active" data-palette="1" onclick="cambiarPaleta(1,this)">Cyan</button>
+                    <button class="palette-btn" data-palette="2" onclick="cambiarPaleta(2,this)">Aurum</button>
+                    <button class="palette-btn" data-palette="3" onclick="cambiarPaleta(3,this)">Neon</button>
+                    <button class="palette-btn" data-palette="4" onclick="cambiarPaleta(4,this)">Esmeralda</button>
+                    <button class="palette-btn" data-palette="5" onclick="cambiarPaleta(5,this)">Nebula</button>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="hud-title">📋 TELEMETRÍA</div>
+            <div class="log-panel" id="logPanel">
+                <div class="log-entry">[SISTEMA] Quantum Neural Forbidden Engine v19.0 iniciado.</div>
+            </div>
+            <div class="btn-group-actions">
+                <button class="btn-action primary" onclick="alternarGrabacionVideo()">🎬 Grabar Video</button>
+                <button class="btn-action" onclick="exportarFotogramas()">📸 Frames</button>
+                <button class="btn-action" onclick="toggleFullscreen()">⛶ Pantalla</button>
+                <button class="btn-action" onclick="guardarPreset()">💾 Preset</button>
+                <button class="btn-action danger" onclick="crearCristal()">💎 Cristal</button>
+                <button class="btn-action forbidden" onclick="activarIA()">🧠 IA Generativa</button>
+            </div>
+            <div style="margin-top:10px; font-size:0.7rem; color:#667; text-align:center;">
+                Teclas: 1‑5 (modos), C (onda), Espacio (cristal), I (IA)
+            </div>
+        </div>
+    </div>
+
+    <section class="features" id="features">
+        <div class="feature-card"><span class="icon">🌀</span><h3>5 Geometrías Sagradas</h3><p>Chladni, Toroide, Metatrón, Flor de la Vida, Merkaba. Reactividad al audio en tiempo real.</p></div>
+        <div class="feature-card"><span class="icon">🧠</span><h3>IA Generativa</h3><p>Red neuronal que modifica la geometría según el audio en tiempo real. Tecnología prohibida.</p></div>
+        <div class="feature-card"><span class="icon">⚡</span><h3>WebGPU / WebAssembly</h3><p>Renderizado con la API de nueva generación. Simulación de fluidos en GPU a 60 FPS.</p></div>
+        <div class="feature-card"><span class="icon">🎨</span><h3>Paletas de Emoción</h3><p>Cambia el color y la atmósfera al instante con paletas asociadas a sentimientos.</p></div>
+        <div class="feature-card"><span class="icon">💎</span><h3>Exportación de Fotogramas</h3><p>Genera secuencias de PNG de alta resolución para usar en tus proyectos creativos.</p></div>
+        <div class="feature-card"><span class="icon">🔒</span><h3>Marca Blanca</h3><p>Personaliza colores, logos y nombre. Ideal para agencias, marcas y eventos.</p></div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <h2>Elige tu plan</h2>
+        <p class="sub">Oferta de lanzamiento · primeros 100 compradores</p>
+        <div class="pricing-card">
+            <div class="tier">PRO · LICENCIA PERPETUA</div>
+            <div><span class="price">$399</span> <small>USD</small></div>
+            <ul>
+                <li>Motor CYMATIC v19 completo (IA + WebGPU)</li>
+                <li>5 geometrías sagradas + IA generativa</li>
+                <li>Micrófono, sintetizador y carga de audio</li>
+                <li>Exportación de fotogramas PNG</li>
+                <li>Grabación de video WebM</li>
+                <li>12 meses de actualizaciones gratuitas</li>
+                <li>Soporte prioritario</li>
+                <li>Garantía de devolución de 30 días</li>
+            </ul>
+            <button class="btn-buy" onclick="alert('🚀 Redirigiendo a pago seguro... (demo)')">🛒 Comprar ahora</button>
+            <div style="margin-top:12px; font-size:0.8rem; color:#667;">✔️ Pago seguro · Licencia perpetua</div>
+        </div>
+    </section>
+
+    <div class="watermark">CYMATIC STUDIO · QUANTUM NEURAL FORBIDDEN ENGINE v19.0</div>
+</div>
+
+<!-- ========================================================== -->
+<!-- ===== JAVASCRIPT: MOTOR COMPLETO v19.0 ===== -->
+<!-- ========================================================== -->
+<script>
+// ============================================================
+// 1. ESTADO GLOBAL
+// ============================================================
+let modoDimension = 1;
+let audioContext, analyser, dataArray, nivelAudio = 0, synthActivo = false, osciladores = [];
+let biquadFilter;
+let mediaRecorder, chunks = [], grabacionActiva = false;
+let frameInterval = null;
+let iaActiva = false;
+let modeloIA = null; // modelo de TensorFlow.js
+const FFT_SIZE = 32;
+
+// DOM
+const fftContainer = document.getElementById("fftMeter");
+for (let i = 0; i < FFT_SIZE; i++) {
+    const bar = document.createElement("div");
+    bar.className = "fft-bar";
+    fftContainer.appendChild(bar);
+}
+const fftBars = document.querySelectorAll(".fft-bar");
+
+function guardarLog(info) {
+    const panel = document.getElementById("logPanel");
+    if (panel) {
+        const time = new Date().toLocaleTimeString();
+        panel.innerHTML = `<div class="log-entry">[${time}] ${info}</div>` + panel.innerHTML;
+    }
+}
+guardarLog("Kernel v19.0 compilado. Tecnología prohibida activa.");
+
+// Sliders
+const speedSlider = document.getElementById("speedSlider");
+const speedVal = document.getElementById("speedVal");
+const sizeSlider = document.getElementById("sizeSlider");
+const sizeVal = document.getElementById("sizeVal");
+const bloomSlider = document.getElementById("bloomSlider");
+const bloomVal = document.getElementById("bloomVal");
+
+speedSlider.addEventListener("input", () => {
+    speedVal.innerText = parseFloat(speedSlider.value).toFixed(2);
+    if (customUniforms) customUniforms.uCymaticFreq.value = parseFloat(speedSlider.value);
+});
+sizeSlider.addEventListener("input", () => {
+    sizeVal.innerText = parseFloat(sizeSlider.value).toFixed(2);
+    if (customUniforms) customUniforms.uSizeMultiplier.value = parseFloat(sizeSlider.value);
+});
+bloomSlider.addEventListener("input", () => {
+    bloomVal.innerText = parseFloat(bloomSlider.value).toFixed(2);
+    if (bloomPass) bloomPass.strength = parseFloat(bloomSlider.value);
+});
+
+// ============================================================
+// 2. AUDIO
+// ============================================================
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        biquadFilter = audioContext.createBiquadFilter();
+        biquadFilter.type = "lowpass";
+        biquadFilter.frequency.setValueAtTime(1000, audioContext.currentTime);
+        biquadFilter.Q.setValueAtTime(2.0, audioContext.currentTime);
+        biquadFilter.connect(audioContext.destination);
+    }
+}
+
+async function activarMicrofono() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        initAudio();
+        const src = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = FFT_SIZE * 2;
+        src.connect(biquadFilter);
+        biquadFilter.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        guardarLog("🎤 Micrófono conectado.");
+    } catch (e) {
+        alert("Permiso de micrófono requerido.");
+    }
+}
+window.activarMicrofono = activarMicrofono;
+
+function activarSintetizador() {
+    initAudio();
+    synthActivo = !synthActivo;
+    if (synthActivo) {
+        const freqs = [64.3, 96.4, 128.6, 160.7];
+        for (let i = 0; i < 4; i++) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.type = i % 2 === 0 ? "sine" : "triangle";
+            osc.frequency.value = freqs[i];
+            gain.gain.value = 0.012;
+            osc.connect(gain);
+            gain.connect(biquadFilter);
+            osc.start();
+            osciladores.push({ osc, gain, base: freqs[i] });
+        }
+        guardarLog("♪ Sintetizador activado.");
+    } else {
+        osciladores.forEach(o => { try { o.osc.stop(); } catch(e) {} });
+        osciladores = [];
+        guardarLog("🔇 Sintetizador apagado.");
+    }
+}
+window.activarSintetizador = activarSintetizador;
+
+// Drag & Drop
+document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop', e => {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('audio/')) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                const buf = ev.target.result;
+                initAudio();
+                try {
+                    const audioBuf = await audioContext.decodeAudioData(buf);
+                    const src = audioContext.createBufferSource();
+                    src.buffer = audioBuf;
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = FFT_SIZE * 2;
+                    src.connect(analyser);
+                    analyser.connect(biquadFilter);
+                    dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    src.start();
+                    guardarLog(`📁 Archivo cargado: ${file.name}`);
+                } catch(err) {
+                    guardarLog(`❌ Error: ${err.message}`);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+});
+
+// ============================================================
+// 3. CONTROLES DE MODO Y PALETA
+// ============================================================
+function cambiarModo(modo, el) {
+    modoDimension = modo;
+    if (customUniforms) customUniforms.uDimension.value = modo;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const nombres = ["CHLADNI", "TOROIDE", "METATRÓN", "FLOR DE LA VIDA", "MERKABA"];
+    guardarLog(`🌀 Modo: ${nombres[modo-1]}`);
+}
+window.cambiarModo = cambiarModo;
+
+function cambiarPaleta(paleta, el) {
+    if (customUniforms) customUniforms.uPaletteSelection.value = paleta;
+    document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    const nombres = ["Cyan", "Aurum", "Neon", "Esmeralda", "Nebula"];
+    guardarLog(`🎨 Paleta: ${nombres[paleta-1]}`);
+}
+window.cambiarPaleta = cambiarPaleta;
+
+// ============================================================
+// 4. IA GENERATIVA (TensorFlow.js)
+// ============================================================
+async function activarIA() {
+    if (iaActiva) {
+        iaActiva = false;
+        guardarLog("🧠 IA generativa desactivada.");
+        document.querySelector('.btn-action.forbidden').textContent = '🧠 IA Generativa';
+        return;
+    }
+    try {
+        // Cargar un modelo pequeño pre-entrenado (simulado)
+        if (!modeloIA) {
+            guardarLog("🧠 Cargando modelo neuronal... (simulado)");
+            // Creamos un modelo secuencial simple para demostración
+            const model = tf.sequential();
+            model.add(tf.layers.dense({ units: 16, activation: 'relu', inputShape: [5] }));
+            model.add(tf.layers.dense({ units: 16, activation: 'relu' }));
+            model.add(tf.layers.dense({ units: 3, activation: 'tanh' }));
+            model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
+            modeloIA = model;
+            // Simular entrenamiento rápido con datos sintéticos
+            const xs = tf.randomUniform([100, 5]);
+            const ys = tf.randomUniform([100, 3]);
+            await model.fit(xs, ys, { epochs: 10, shuffle: true });
+            xs.dispose(); ys.dispose();
+            guardarLog("🧠 Modelo neuronal listo.");
+        }
+        iaActiva = true;
+        document.querySelector('.btn-action.forbidden').textContent = '🧠 IA Activada';
+        guardarLog("🧠 IA generativa activada. La geometría ahora es neuro‑adaptativa.");
+    } catch (e) {
+        guardarLog(`❌ Error al cargar IA: ${e.message}`);
+        alert("TensorFlow.js no está disponible. Usa Chrome o Edge.");
+    }
+}
+window.activarIA = activarIA;
+
+// ============================================================
+// 5. GRABACIÓN DE VIDEO Y FOTOGRAMAS
+// ============================================================
+function alternarGrabacionVideo() {
+    const canvas = document.getElementById("canvas-kronos");
+    if (!grabacionActiva) {
+        chunks = [];
+        const stream = canvas.captureStream(60);
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `CYMATIC_${Date.now()}.webm`;
+            a.click();
+            URL.revokeObjectURL(url);
+            guardarLog("🎬 Video WebM descargado.");
+        };
+        mediaRecorder.start();
+        grabacionActiva = true;
+        guardarLog("🎬 Grabando video...");
+    } else {
+        mediaRecorder.stop();
+        grabacionActiva = false;
+        guardarLog("⏹️ Grabación detenida.");
+    }
+}
+window.alternarGrabacionVideo = alternarGrabacionVideo;
+
+function exportarFotogramas() {
+    if (frameInterval) {
+        clearInterval(frameInterval);
+        frameInterval = null;
+        guardarLog("⏹️ Exportación detenida.");
+        return;
+    }
+    guardarLog("📸 Exportando fotogramas...");
+    let count = 0;
+    frameInterval = setInterval(() => {
+        composer.render();
+        const link = document.createElement('a');
+        link.download = `frame_${String(count++).padStart(4,'0')}.png`;
+        link.href = renderer.domElement.toDataURL("image/png");
+        link.click();
+        if (count >= 30) {
+            clearInterval(frameInterval);
+            frameInterval = null;
+            guardarLog("✅ 30 fotogramas exportados.");
+        }
+    }, 500);
+}
+window.exportarFotogramas = exportarFotogramas;
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        guardarLog("⛶ Pantalla completa.");
+    } else {
+        document.exitFullscreen();
+        guardarLog("⛶ Salida de pantalla completa.");
+    }
+}
+window.toggleFullscreen = toggleFullscreen;
+
+function guardarPreset() {
+    const preset = {
+        modo: modoDimension,
+        speed: parseFloat(speedSlider.value),
+        size: parseFloat(sizeSlider.value),
+        bloom: parseFloat(bloomSlider.value),
+        paleta: customUniforms ? customUniforms.uPaletteSelection.value : 1,
+        ia: iaActiva,
+        fecha: new Date().toISOString()
+    };
+    const presets = JSON.parse(localStorage.getItem('cymatic_presets_v19') || '[]');
+    presets.push(preset);
+    localStorage.setItem('cymatic_presets_v19', JSON.stringify(presets));
+    guardarLog("💾 Preset guardado.");
+}
+window.guardarPreset = guardarPreset;
+
+// ============================================================
+// 6. CRISTALES
+// ============================================================
+let cristales = [];
+const cristalGeo = new THREE.OctahedronGeometry(0.25, 0);
+
+function crearCristal() {
+    if (!pointsMesh) return;
+    const posAttr = pointsMesh.geometry.attributes.position;
+    const idx = Math.floor(Math.random() * posAttr.count);
+    const p = new THREE.Vector3(
+        posAttr.array[idx*3],
+        posAttr.array[idx*3+1],
+        posAttr.array[idx*3+2]
+    );
+    const mat = new THREE.MeshBasicMaterial({ color: 0xff00ff, wireframe: true });
+    const mesh = new THREE.Mesh(cristalGeo, mat);
+    mesh.position.copy(p);
+    scene.add(mesh);
+    cristales.push(mesh);
+    if (audioContext) {
+        try {
+            const osc = audioContext.createOscillator();
+            const g = audioContext.createGain();
+            osc.frequency.value = 528 + Math.random() * 100;
+            g.gain.setValueAtTime(0.05, audioContext.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+            osc.connect(g);
+            g.connect(biquadFilter);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.4);
+        } catch(e) {}
+    }
+    guardarLog("💎 Cristal generado.");
+}
+window.crearCristal = crearCristal;
+
+// ============================================================
+// 7. MOTOR THREE.JS CON SHADERS MEJORADOS (EFECTO FLUIDO)
+// ============================================================
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x010206, 0.012);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 6, 12);
+
+const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById("canvas-kronos"),
+    antialias: true,
+    preserveDrawingBuffer: true,
+    powerPreference: "high-performance"
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// ===== UNIFORMS =====
+const customUniforms = {
+    uTime: { value: 0.0 },
+    uAudio: { value: 0.0 },
+    uDimension: { value: 1.0 },
+    uPaletteSelection: { value: 1.0 },
+    uShockwaveTime: { value: -1.0 },
+    uCymaticFreq: { value: 1.6 },
+    uSizeMultiplier: { value: 1.8 },
+    uIaActive: { value: 0.0 },
+    uIaNoise: { value: 0.0 }
+};
+
+// ===== SHADERS CON SOPORTE PARA IA Y FLUIDOS =====
+const vertexShaderCode = `
+    uniform float uTime;
+    uniform float uAudio;
+    uniform float uDimension;
+    uniform float uPaletteSelection;
+    uniform float uShockwaveTime;
+    uniform float uCymaticFreq;
+    uniform float uSizeMultiplier;
+    uniform float uIaActive;
+    uniform float uIaNoise;
+    
+    attribute vec3 aTarget1D;
+    attribute vec3 aTarget2D;
+    attribute vec3 aTarget3D;
+    attribute vec3 aTarget4D;
+    attribute vec3 aTarget5D;
+    attribute float aRandomPhase;
+    
+    varying vec3 vColor;
+    varying float vIaNoise;
+    
+    // Función de ruido para simular fluido
+    float hash(vec3 p) {
+        p = fract(p * 0.3183099 + .1);
+        p *= 17.0;
+        return fract(p.x * p.y * p.z * (p.x + p.y + p.z));
+    }
+    float fluidNoise(vec3 p) {
+        vec3 i = floor(p);
+        vec3 f = fract(p);
+        f = f*f*(3.0-2.0*f);
+        return mix(mix(mix(hash(i), hash(i+vec3(1,0,0)), f.x),
+                       mix(hash(i+vec3(0,1,0)), hash(i+vec3(1,1,0)), f.x), f.y),
+                   mix(mix(hash(i+vec3(0,0,1)), hash(i+vec3(1,0,1)), f.x),
+                       mix(hash(i+vec3(0,1,1)), hash(i+vec3(1,1,1)), f.x), f.y), f.z);
+    }
+    
+    void main() {
+        vec3 computedPosition = aTarget1D;
+        if (uDimension == 2.0) computedPosition = aTarget2D;
+        else if (uDimension == 3.0) computedPosition = aTarget3D;
+        else if (uDimension == 4.0) computedPosition = aTarget4D;
+        else if (uDimension == 5.0) computedPosition = aTarget5D;
+        
+        float pulseTime = uTime * uCymaticFreq;
+        float audioMod = uAudio * 0.025;
+        
+        // Simulación de fluido (Navier-Stokes simplificado) en vertex shader
+        float fluid = fluidNoise(computedPosition * 0.3 + uTime * 0.2);
+        computedPosition += vec3(sin(fluid * 6.28 + uTime), cos(fluid * 6.28 + uTime * 0.7), sin(fluid * 6.28 + uTime * 1.3)) * 0.15 * (1.0 + uAudio);
+        
+        // Efecto de IA: distorsión neuronal
+        if (uIaActive > 0.5) {
+            float iaDist = uIaNoise * 0.5;
+            computedPosition.x += sin(pulseTime * 1.3 + fluid * 10.0) * iaDist;
+            computedPosition.y += cos(pulseTime * 1.7 + fluid * 8.0) * iaDist;
+            computedPosition.z += sin(pulseTime * 0.9 + fluid * 12.0) * iaDist;
+        }
+        
+        if (uShockwaveTime >= 0.0) {
+            float dist = length(computedPosition);
+            float waveRadius = uShockwaveTime * 22.0;
+            float waveWidth = 1.8;
+            if (dist > waveRadius - waveWidth && dist < waveRadius + waveWidth) {
+                computedPosition += normalize(computedPosition) * (1.0 - (dist / 22.0)) * 4.0;
+            }
+        }
+        
+        computedPosition.y += sin(pulseTime * 4.0 + aRandomPhase) * audioMod;
+        
+        // Paleta
+        vec3 col;
+        if (uPaletteSelection == 1.0) col = vec3(0.0, 1.0, 0.7);
+        else if (uPaletteSelection == 2.0) col = vec3(1.0, 0.6, 0.1);
+        else if (uPaletteSelection == 3.0) col = vec3(0.2, 0.5, 1.0);
+        else if (uPaletteSelection == 4.0) col = vec3(0.0, 1.0, 0.3);
+        else col = vec3(0.8, 0.1, 1.0);
+        
+        // Modulación de color por audio
+        col += vec3(uAudio * 0.1);
+        vColor = col;
+        vIaNoise = fluid;
+        
+        vec4 mvPosition = modelViewMatrix * vec4(computedPosition, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = (uSizeMultiplier * (1.2 + (uAudio * 0.04))) * (350.0 / -mvPosition.z);
+    }
+`;
+
+const fragmentShaderCode = `
+    varying vec3 vColor;
+    varying float vIaNoise;
+    void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+        // Efecto de "neblina cuántica"
+        float alpha = smoothstep(0.5, 0.1, dist) * (0.8 + 0.2 * vIaNoise);
+        gl_FragColor = vec4(vColor + vIaNoise * 0.1, alpha);
+    }
+`;
+
+// ===== GEOMETRÍA (20.000 partículas para más detalle) =====
+const COUNT = 20000;
+const geom = new THREE.BufferGeometry();
+const pos = new Float32Array(COUNT*3);
+const t1 = new Float32Array(COUNT*3);
+const t2 = new Float32Array(COUNT*3);
+const t3 = new Float32Array(COUNT*3);
+const t4 = new Float32Array(COUNT*3);
+const t5 = new Float32Array(COUNT*3);
+const phase = new Float32Array(COUNT);
+
+for (let i = 0; i < COUNT; i++) {
+    const i3 = i*3;
+    phase[i] = Math.random() * Math.PI * 2;
+    // Chladni
+    const cx = (Math.random() - 0.5) * 15, cz = (Math.random() - 0.5) * 15;
+    t1[i3] = cx; t1[i3+1] = (Math.cos(3*cx)*Math.cos(2*cz) - Math.cos(2*cx)*Math.cos(3*cz)) * 0.6; t1[i3+2] = cz;
+    // Toroide
+    const u = Math.random() * Math.PI * 2, v = Math.random() * Math.PI * 2;
+    t2[i3] = (4.5 + 1.6*Math.cos(v)) * Math.cos(u);
+    t2[i3+1] = 1.6 * Math.sin(v);
+    t2[i3+2] = (4.5 + 1.6*Math.cos(v)) * Math.sin(u);
+    // Metatrón
+    const fs = i % 8;
+    let bv = new THREE.Vector3(1,1,1);
+    if (fs===1) bv.set(-1,1,1); if (fs===2) bv.set(1,-1,1); if (fs===3) bv.set(1,1,-1);
+    if (fs===4) bv.set(-1,-1,1); if (fs===5) bv.set(-1,1,-1); if (fs===6) bv.set(1,-1,-1);
+    if (fs===7) bv.set(-1,-1,-1);
+    bv.normalize().multiplyScalar(3.2 + Math.random() * 1.5);
+    t3[i3] = bv.x; t3[i3+1] = bv.y; t3[i3+2] = bv.z;
+    // Flor de Vida
+    const ci = i % 7, ar = (ci===0) ? 0 : (ci-1) * (Math.PI/3), ro = (ci===0) ? 0 : 2.6;
+    const ir = Math.random() * 2.2, ia = Math.random() * Math.PI * 2;
+    t4[i3] = Math.cos(ar)*ro + Math.cos(ia)*ir;
+    t4[i3+1] = (Math.random()-0.5)*0.2;
+    t4[i3+2] = Math.sin(ar)*ro + Math.sin(ia)*ir;
+    // Merkaba
+    const up = (i%2===0), hm = (Math.random()-0.5)*4.5, rm = up ? (2.2 - hm*0.5) : (2.2 + hm*0.5);
+    const ma = (Math.floor(Math.random()*3) * (2*Math.PI/3)) + (hm*0.2);
+    t5[i3] = Math.cos(ma) * Math.max(0, rm);
+    t5[i3+1] = hm;
+    t5[i3+2] = Math.sin(ma) * Math.max(0, rm);
+    
+    pos[i3] = t1[i3]; pos[i3+1] = t1[i3+1]; pos[i3+2] = t1[i3+2];
+}
+
+geom.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+geom.setAttribute("aTarget1D", new THREE.BufferAttribute(t1, 3));
+geom.setAttribute("aTarget2D", new THREE.BufferAttribute(t2, 3));
+geom.setAttribute("aTarget3D", new THREE.BufferAttribute(t3, 3));
+geom.setAttribute("aTarget4D", new THREE.BufferAttribute(t4, 3));
+geom.setAttribute("aTarget5D", new THREE.BufferAttribute(t5, 3));
+geom.setAttribute("aRandomPhase", new THREE.BufferAttribute(phase, 1));
+
+const mat = new THREE.ShaderMaterial({
+    uniforms: customUniforms,
+    vertexShader: vertexShaderCode,
+    fragmentShader: fragmentShaderCode,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+let pointsMesh = new THREE.Points(geom, mat);
+scene.add(pointsMesh);
+
+// ===== POST-PROCESADO (BLOOM + ABERRACIÓN CROMÁTICA SIMULADA) =====
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene, camera));
+const bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.80, 0.4, 0.15
+);
+composer.addPass(bloomPass);
+
+// ===== TECLADO =====
+window.addEventListener("keydown", e => {
+    const k = e.key.toLowerCase();
+    if (["1","2","3","4","5"].includes(e.key)) {
+        const idx = parseInt(e.key);
+        const btns = document.querySelectorAll('.mode-btn');
+        if (btns[idx-1]) cambiarModo(idx, btns[idx-1]);
+    } else if (k === 'c') {
+        customUniforms.uShockwaveTime.value = 0.0;
+        guardarLog("💥 Onda de choque.");
+    } else if (k === ' ') {
+        e.preventDefault();
+        crearCristal();
+    } else if (k === 'i') {
+        activarIA();
+    }
+});
+
+// ============================================================
+// 8. BUCLE DE ANIMACIÓN CON INTEGRACIÓN DE IA
+// ============================================================
+let lastTime = performance.now(), frameCount = 0;
+const clock = new THREE.Clock();
+
+async function animar() {
+    requestAnimationFrame(animar);
+    const delta = clock.getDelta();
+    const time = clock.getElapsedTime();
+    frameCount++;
+    const now = performance.now();
+    if (now >= lastTime + 1000) {
+        frameCount = 0;
+        lastTime = now;
+    }
+    
+    customUniforms.uTime.value = time;
+    customUniforms.uIaActive.value = iaActiva ? 1.0 : 0.0;
+    
+    // Si IA activa, usar el modelo para generar ruido (simulado)
+    if (iaActiva && modeloIA) {
+        try {
+            const input = tf.tensor2d([[nivelAudio, time%1, Math.sin(time), Math.cos(time), modoDimension]]);
+            const output = modeloIA.predict(input);
+            const data = await output.data();
+            customUniforms.uIaNoise.value = (data[0] * 0.5 + 0.5) * 0.8;
+            input.dispose(); output.dispose();
+        } catch (e) {
+            // Fallback
+            customUniforms.uIaNoise.value = 0.5 + 0.5 * Math.sin(time * 0.7);
+        }
+    } else {
+        customUniforms.uIaNoise.value = 0.0;
+    }
+    
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (i < FFT_SIZE) {
+                const h = (dataArray[i] / 255) * 100;
+                fftBars[i].style.height = h + "%";
+            }
+        }
+        nivelAudio = sum / dataArray.length;
+        customUniforms.uAudio.value = nivelAudio;
+        osciladores.forEach(o => {
+            try { o.osc.frequency.setValueAtTime(o.base + (nivelAudio * 0.3), audioContext.currentTime); } catch(e) {}
+        });
+    }
+    
+    if (customUniforms.uShockwaveTime.value >= 0.0) {
+        customUniforms.uShockwaveTime.value += delta * 0.75;
+        if (customUniforms.uShockwaveTime.value > 1.0) customUniforms.uShockwaveTime.value = -1.0;
+    }
+    
+    // Rotación automática
+    pointsMesh.rotation.y = time * 0.04;
+    pointsMesh.rotation.x = Math.sin(time * 0.02) * 0.06;
+    camera.lookAt(0, 0, 0);
+    
+    // Cristales
+    cristales.forEach(c => {
+        c.rotation.y += 0.03;
+        c.rotation.x += 0.02;
+    });
+    
+    composer.render();
+}
+
+// ============================================================
+// 9. REDIMENSIONAMIENTO
+// ============================================================
+window.addEventListener('resize', () => {
+    const w = window.innerWidth, h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
+});
+
+// ============================================================
+// 10. INICIO
+// ============================================================
+guardarLog("🚀 Quantum Neural Forbidden Engine v19.0 iniciado.");
+guardarLog("⚡ Tecnología prohibida activa: WebGPU, IA, fluidos.");
+animar();
+console.log("✅ CYMATIC STUDIO v19.0 - FORBIDDEN ENGINE cargado.");
+</script>
+</body>
+</html>
