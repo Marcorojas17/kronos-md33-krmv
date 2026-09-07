@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="folio" content="5204160405358537">
+<meta name="sha" content="a4ff808e">
+<meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>CYMATIC STUDIO PRO v13 · Geometría Sagrada en Tiempo Real</title>
+
+<!-- ===== CSS ===== -->
+<style>
+    /* RESET & FUENTES */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,800;0,900;1,400&display=swap');
+    body {
+        font-family: 'Inter', 'SF Mono', 'Courier New', monospace;
+        background: #010206;
+        color: #e0e0e0;
+        overflow-x: hidden;
+    }
+    a { color: #00ffcc; text-decoration: none; }
+    
+    /* CANVAS DE FONDO */
+    #canvas-kronos {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+        z-index: 1; pointer-events: none;
+    }
+    .app-wrapper { position: relative; z-index: 2; width: 100%; }
+    
+    /* HEADER */
+    .header {
+        position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+        padding: 16px 30px;
+        background: rgba(1, 2, 6, 0.80);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(0, 255, 204, 0.12);
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .logo {
+        font-size: 1.4rem; font-weight: 900;
+        background: linear-gradient(135deg, #00ffcc, #a855f7);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        letter-spacing: -0.5px;
+    }
+    .logo span { font-weight: 300; -webkit-text-fill-color: rgba(255,255,255,0.3); }
+    .nav-links { display: flex; gap: 30px; align-items: center; }
+    .nav-links a { font-size: 0.85rem; color: #a0aec0; transition: 0.3s; }
+    .nav-links a:hover { color: #00ffcc; }
+    .btn-cta-nav {
+        background: linear-gradient(135deg, #00ffcc, #00aaff);
+        color: #000; padding: 8px 22px; border-radius: 40px;
+        font-weight: 700; font-size: 0.85rem; border: none; cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-cta-nav:hover { transform: scale(1.05); box-shadow: 0 0 25px rgba(0,255,204,0.4); }
+    
+    /* HERO */
+    .hero {
+        padding: 160px 30px 80px; text-align: center;
+        background: radial-gradient(circle at 50% 30%, rgba(0,255,204,0.03) 0%, transparent 60%);
+    }
+    .hero .badge {
+        display: inline-block; background: rgba(0,255,204,0.08); border: 1px solid rgba(0,255,204,0.2);
+        padding: 6px 18px; border-radius: 40px; font-size: 0.75rem;
+        color: #00ffcc; letter-spacing: 2px; margin-bottom: 24px; font-weight: 700;
+    }
+    .hero h1 {
+        font-size: 4.2rem; font-weight: 900;
+        background: linear-gradient(135deg, #fff 40%, #00ffcc 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        line-height: 1.1; max-width: 850px; margin: 0 auto 24px;
+    }
+    .hero p {
+        font-size: 1.25rem; color: #a0aec0; max-width: 660px; margin: 0 auto 35px;
+        line-height: 1.6;
+    }
+    .btn-hero {
+        background: linear-gradient(135deg, #00ffcc, #a855f7);
+        border: none; color: #000; font-weight: 800; font-size: 1.1rem;
+        padding: 16px 42px; border-radius: 60px; cursor: pointer; margin: 10px;
+        transition: 0.3s; box-shadow: 0 10px 30px rgba(0,255,204,0.25);
+    }
+    .btn-hero:hover { transform: translateY(-3px); box-shadow: 0 15px 45px rgba(0,255,204,0.45); }
+    .btn-hero-outline {
+        background: rgba(255,255,255,0.03); border: 2px solid rgba(255,255,255,0.15);
+        color: #fff; padding: 14px 38px; border-radius: 60px;
+        font-weight: 600; font-size: 1.1rem; cursor: pointer; margin: 10px;
+        transition: 0.3s;
+    }
+    .btn-hero-outline:hover { border-color: #ff00ff; background: rgba(255,0,255,0.05); }
+    
+    /* CONSOLA EMBEBIDA */
+    .hud-embedded {
+        max-width: 1100px; margin: 40px auto; padding: 24px;
+        background: rgba(4, 6, 14, 0.85);
+        border: 1px solid rgba(0,255,204,0.2);
+        border-radius: 20px;
+        backdrop-filter: blur(30px);
+        box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+        text-align: left;
+    }
+    .hud-title { font-size: 0.9rem; font-weight: 800; color: #00ffcc; letter-spacing: 2px; margin-bottom: 12px; font-family: monospace; }
+    .fft-container {
+        display: flex; gap: 2px; align-items: flex-end; width: 100%; height: 40px;
+        background: rgba(0,0,0,0.6); border-radius: 8px; padding: 4px;
+        border: 1px solid rgba(0,255,204,0.15); overflow: hidden;
+    }
+    .fft-bar { flex: 1; height: 0%; background: linear-gradient(to top, #00ffcc, #ff00ff); border-radius: 1px; }
+    .control-group { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+    .control-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.85rem; color: #a0aec0; }
+    .control-row input[type="range"] { width: 50%; accent-color: #00ffcc; cursor: pointer; }
+    .val-display { font-family: monospace; color: #fff; min-width: 40px; text-align: right; }
+    .log-panel {
+        background: rgba(0,0,0,0.4); border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);
+        padding: 12px; height: 130px; overflow-y: auto; font-family: monospace; font-size: 11px; scrollbar-width: none;
+    }
+    .log-panel::-webkit-scrollbar { display: none; }
+    .log-entry { border-left: 2px solid #00ffcc; padding-left: 8px; margin-bottom: 6px; color: #a4fbe7; }
+    
+    /* FEATURES */
+    .features {
+        padding: 80px 20px; max-width: 1200px; margin: 0 auto;
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px;
+    }
+    .feature-card {
+        background: rgba(4, 6, 14, 0.6); border: 1px solid rgba(255,255,255,0.05);
+        border-radius: 16px; padding: 40px 25px; text-align: center;
+        backdrop-filter: blur(10px); transition: 0.3s;
+    }
+    .feature-card:hover { border-color: rgba(0,255,204,0.3); transform: translateY(-5px); }
+    .feature-card .icon { font-size: 2.5rem; margin-bottom: 16px; display: block; }
+    .feature-card h3 { font-size: 1.25rem; color: #fff; margin-bottom: 10px; }
+    .feature-card p { font-size: 0.95rem; color: #718096; line-height: 1.6; }
+    
+    /* PRICING */
+    .pricing { padding: 80px 20px; text-align: center; background: rgba(0,0,0,0.4); }
+    .pricing h2 { font-size: 3rem; font-weight: 800; color: #fff; margin-bottom: 12px; }
+    .pricing .sub { color: #a0aec0; font-size: 1.15rem; margin-bottom: 50px; }
+    .pricing-card {
+        display: inline-block; background: linear-gradient(145deg, rgba(4,6,14,0.9), rgba(20,10,35,0.9));
+        border: 1px solid rgba(0,255,204,0.25); border-radius: 28px; padding: 50px 50px;
+        max-width: 460px; width: 100%; box-shadow: 0 30px 70px rgba(0,0,0,0.8); text-align: left;
+    }
+    .pricing-card .tier { font-size: 0.8rem; font-weight: 800; color: #00ffcc; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; }
+    .pricing-card .price { font-size: 3.8rem; font-weight: 900; color: #fff; line-height: 1; }
+    .pricing-card .price small { font-size: 1.2rem; font-weight: 400; color: #a0aec0; }
+    .pricing-card ul { list-style: none; padding: 30px 0; display: flex; flex-direction: column; gap: 12px; }
+    .pricing-card ul li { color: #e2e8f0; font-size: 1rem; }
+    .pricing-card ul li::before { content: "✓  "; color: #00ffcc; font-weight: 900; }
+    .btn-buy {
+        background: linear-gradient(135deg, #00ffcc, #a855f7); border: none; color: #000;
+        font-weight: 900; font-size: 1.2rem; padding: 16px; border-radius: 50px;
+        cursor: pointer; width: 100%; transition: 0.3s;
+    }
+    .btn-buy:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0,255,204,0.4); background: #fff; }
+    
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+        .hero h1 { font-size: 2.5rem; }
+        .hero p { font-size: 1rem; }
+        .header { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+        .nav-links { display: none; }
+        .hud-embedded { grid-template-columns: 1fr; }
+        .pricing-card { padding: 30px 20px; }
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #000; }
+    ::-webkit-scrollbar-thumb { background: #00ffcc; border-radius: 10px; }
+</style>
+
+<!-- ===== LIBRERÍAS DESDE CDN ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+</head>
+<body>
+
+<!-- ===== CANVAS ===== -->
+<canvas id="canvas-kronos"></canvas>
+
+<div class="app-wrapper">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="logo">CYMATIC<span>STUDIO</span></div>
+        <nav class="nav-links">
+            <a href="#features">Características</a>
+            <a href="#engine">Consola</a>
+            <a href="#pricing">Precios</a>
+        </nav>
+        <button class="btn-cta-nav" onclick="activarMicrofono()">🎤 Probar ahora</button>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="badge">⚡ NUEVA VERSIÓN v13.0 · ENGINE PRO</div>
+        <h1>Geometría Sagrada<br>Dinámica Molecular</h1>
+        <p>Transforma frecuencias de audio y música en estructuras cuánticas cimáticas interactivas mediante cómputo matemático avanzado en GPU.</p>
+        <div>
+            <button class="btn-hero" onclick="activarMicrofono()">▶ CAPTURAR MICRÓFONO</button>
+            <button class="btn-hero-outline" onclick="activarSintetizador()">♪ SINTETIZADOR</button>
+        </div>
+    </section>
+
+    <!-- CONSOLA EMBEBIDA (v13) -->
+    <div class="hud-embedded" id="engine">
+        <div>
+            <div class="hud-title">🎛️ MONITOREO DE ESPECTRO FFT</div>
+            <div class="fft-container" id="fftMeter"></div>
+            <div class="control-group">
+                <div class="control-row">
+                    <span>Frecuencia Cimática</span>
+                    <input type="range" id="speedSlider" min="0.1" max="5.0" step="0.05" value="1.6">
+                    <span id="speedVal" class="val-display">1.60</span>
+                </div>
+                <div class="control-row">
+                    <span>Densidad de Nodos</span>
+                    <input type="range" id="sizeSlider" min="0.5" max="3.5" step="0.1" value="1.8">
+                    <span id="sizeVal" class="val-display">1.80</span>
+                </div>
+                <div class="control-row">
+                    <span>Intensidad Bloom</span>
+                    <input type="range" id="bloomSlider" min="0" max="2.0" step="0.02" value="0.80">
+                    <span id="bloomVal" class="val-display">0.80</span>
+                </div>
+                <div class="control-row">
+                    <span>Color (Tono)</span>
+                    <input type="range" id="colorSlider" min="0" max="1.0" step="0.01" value="0.5">
+                    <span id="colorVal" class="val-display">0.50</span>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="hud-title">📋 TELEMETRÍA DE EVENTOS</div>
+            <div class="log-panel" id="logPanel">
+                <div class="log-entry">[SISTEMA] Consola lista. Esperando inyección de audio...</div>
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn-cta-nav" style="flex:1; font-size:0.7rem; padding:6px 12px;" onclick="exportarVideo()">🎬 Exportar Video</button>
+                <button class="btn-cta-nav" style="flex:1; font-size:0.7rem; padding:6px 12px; background:linear-gradient(135deg,#ff00cc,#a855f7);" onclick="toggleFullscreen()">⛶ Pantalla Completa</button>
+                <button class="btn-cta-nav" style="flex:1; font-size:0.7rem; padding:6px 12px; background:linear-gradient(135deg,#ff8800,#ff00cc);" onclick="guardarPreset()">💾 Guardar Preset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEATURES -->
+    <section class="features" id="features">
+        <div class="feature-card"><span class="icon">🌀</span><h3>5 Geometrías Sagradas</h3><p>Chladni, Toroide Áureo, Cubo de Metatrón, Flor de la Vida, Merkaba. Reactividad al audio en tiempo real.</p></div>
+        <div class="feature-card"><span class="icon">🎵</span><h3>Audio Reactivo Avanzado</h3><p>Micrófono, sintetizador integrado o carga de archivos MP3/WAV. Análisis FFT multipunto.</p></div>
+        <div class="feature-card"><span class="icon">🎨</span><h3>Post-procesado Cinematográfico</h3><p>Bloom, aberración cromática, glitch, tormenta y onda de choque con teclas.</p></div>
+        <div class="feature-card"><span class="icon">💎</span><h3>Exportación a Video 4K</h3><p>Graba tu sesión en WebM con audio sincronizado. Ideal para contenido profesional.</p></div>
+        <div class="feature-card"><span class="icon">🖱️</span><h3>Interacción Táctil</h3><p>Arrastra para rotar, pasa el ratón sobre los cristales para iluminarlos. Experiencia inmersiva.</p></div>
+        <div class="feature-card"><span class="icon">🔒</span><h3>Marca Blanca</h3><p>Personaliza colores, logos y nombre. Ideal para agencias, marcas y eventos.</p></div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="pricing" id="pricing">
+        <h2>Elige tu plan</h2>
+        <p class="sub">Oferta de lanzamiento · primeros 100 compradores</p>
+        <div class="pricing-card">
+            <div class="tier">PRO · LICENCIA PERPETUA</div>
+            <div><span class="price">$149</span> <small>USD</small></div>
+            <ul>
+                <li>Motor CYMATIC v13 completo</li>
+                <li>5 geometrías sagradas + 6º modo espectro</li>
+                <li>Micrófono, sintetizador y carga de audio</li>
+                <li>Exportación a video 4K con audio</li>
+                <li>12 meses de actualizaciones gratuitas</li>
+                <li>Soporte prioritario por correo</li>
+                <li>Garantía de devolución de 30 días</li>
+            </ul>
+            <button class="btn-buy" onclick="alert('🚀 Redirigiendo a pago seguro... (demo)')">🛒 Comprar ahora</button>
+            <div style="margin-top:12px; font-size:0.8rem; color:#667;">✔️ Pago seguro · Licencia perpetua</div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer style="padding:30px 20px; text-align:center; border-top:1px solid rgba(255,255,255,0.03); color:#445; font-size:0.8rem;">
+        <p>© 2026 CYMATIC STUDIO · Desarrollado con ❤️ · <a href="#">Términos</a> · <a href="#">Privacidad</a></p>
+    </footer>
+</div>
+
+<!-- ========================================================== -->
+<!-- ===== JAVASCRIPT: MOTOR CYMATIC v13 + TODAS LAS MEJORAS ===== -->
+<!-- ========================================================== -->
+<script>
+// ============================================================
+// 1. ESTADO GLOBAL Y AUDIO
+// ============================================================
+let modoDimension = 1, modoCuantico = 0.0, glitchActivo = 0.0, tormentaActiva = 0.0;
+let audioContext, analyser, dataArray, nivelAudio = 0, synthActivo = false, osciladores = [];
+let biquadFilter;
+const SHA = "a4ff808e";
+const FFT_SIZE = 32;
+
+// DOM elements
+const fftContainer = document.getElementById("fftMeter");
+for (let i = 0; i < FFT_SIZE; i++) {
+    const bar = document.createElement("div");
+    bar.className = "fft-bar";
+    fftContainer.appendChild(bar);
+}
+const fftBars = document.querySelectorAll(".fft-bar");
+
+function guardarLog(info) {
+    const panel = document.getElementById("logPanel");
+    if (panel) {
+        const time = new Date().toLocaleTimeString();
+        panel.innerHTML = `<div class="log-entry">[${time}] ${info}</div>` + panel.innerHTML;
+    }
+}
+guardarLog("Consola lista. Esperando inyección de audio...");
+
+// Sliders
+const speedSlider = document.getElementById("speedSlider");
+const speedVal = document.getElementById("speedVal");
+const sizeSlider = document.getElementById("sizeSlider");
+const sizeVal = document.getElementById("sizeVal");
+const bloomSlider = document.getElementById("bloomSlider");
+const bloomVal = document.getElementById("bloomVal");
+const colorSlider = document.getElementById("colorSlider");
+const colorVal = document.getElementById("colorVal");
+
+speedSlider.addEventListener("input", (e) => { speedVal.innerText = parseFloat(e.target.value).toFixed(2); });
+sizeSlider.addEventListener("input", (e) => { sizeVal.innerText = parseFloat(e.target.value).toFixed(2); });
+bloomSlider.addEventListener("input", (e) => {
+    bloomVal.innerText = parseFloat(e.target.value).toFixed(2);
+    if (bloomPass) bloomPass.strength = parseFloat(e.target.value);
+});
+colorSlider.addEventListener("input", (e) => {
+    colorVal.innerText = parseFloat(e.target.value).toFixed(2);
+    if (customUniforms) customUniforms.uColorShift.value = parseFloat(e.target.value);
+});
+
+// ============================================================
+// 2. AUDIO: MICRÓFONO, SINTETIZADOR Y CARGA DE ARCHIVOS
+// ============================================================
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        biquadFilter = audioContext.createBiquadFilter();
+        biquadFilter.type = "lowpass";
+        biquadFilter.frequency.setValueAtTime(1000, audioContext.currentTime);
+        biquadFilter.Q.setValueAtTime(2.0, audioContext.currentTime);
+        biquadFilter.connect(audioContext.destination);
+    }
+}
+
+async function activarMicrofono() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        initAudio();
+        const src = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = FFT_SIZE * 2;
+        src.connect(biquadFilter);
+        biquadFilter.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        guardarLog("🎤 Micrófono conectado. Flujo de audio activo.");
+    } catch (e) {
+        alert("Permiso de micrófono requerido.");
+    }
+}
+window.activarMicrofono = activarMicrofono;
+
+function activarSintetizador() {
+    initAudio();
+    synthActivo = !synthActivo;
+    if (synthActivo) {
+        const freqs = [64.3, 96.4, 128.6, 160.7];
+        for (let i = 0; i < 4; i++) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.type = i % 2 === 0 ? "sine" : "triangle";
+            osc.frequency.value = freqs[i];
+            gain.gain.value = 0.015;
+            osc.connect(gain);
+            gain.connect(biquadFilter);
+            osc.start();
+            osciladores.push({ osc, gain, base: freqs[i] });
+        }
+        guardarLog("♪ Sintetizador polifónico activado.");
+    } else {
+        osciladores.forEach(o => { try { o.osc.stop(); } catch(e) {} });
+        osciladores = [];
+        guardarLog("🔇 Sintetizador apagado.");
+    }
+}
+window.activarSintetizador = activarSintetizador;
+
+// Carga de archivos por drag & drop
+document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('dragover', (e) => { e.preventDefault(); });
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('audio/')) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const arrayBuffer = event.target.result;
+                initAudio();
+                try {
+                    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                    const source = audioContext.createBufferSource();
+                    source.buffer = audioBuffer;
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = FFT_SIZE * 2;
+                    source.connect(analyser);
+                    analyser.connect(biquadFilter);
+                    dataArray = new Uint8Array(analyser.frequencyBinCount);
+                    source.start();
+                    guardarLog(`📁 Archivo cargado: ${file.name} (${(file.size/1024).toFixed(1)} KB)`);
+                } catch (err) {
+                    guardarLog(`❌ Error al decodificar el archivo: ${err.message}`);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+});
+
+// ============================================================
+// 3. EXPORTACIÓN DE VIDEO (MediaRecorder)
+// ============================================================
+let mediaRecorder = null;
+let recordedChunks = [];
+
+function exportarVideo() {
+    const canvas = document.getElementById('canvas-kronos');
+    const stream = canvas.captureStream(30);
+    // Añadir audio si existe
+    let audioStream = null;
+    if (audioContext && audioContext.state === 'running') {
+        const dest = audioContext.createMediaStreamDestination();
+        // Conectar el filtro al destino
+        biquadFilter.connect(dest);
+        audioStream = dest.stream;
+    }
+    const combinedStream = audioStream ? new MediaStream([...stream.getTracks(), ...audioStream.getTracks()]) : stream;
+    mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm;codecs=vp9' });
+    recordedChunks = [];
+    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `CYMATIC_${Date.now()}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+        guardarLog("🎬 Video exportado correctamente.");
+    };
+    mediaRecorder.start();
+    setTimeout(() => mediaRecorder.stop(), 10000); // 10 segundos de grabación
+    guardarLog("🎬 Grabando video (10s)...");
+}
+window.exportarVideo = exportarVideo;
+
+// ============================================================
+// 4. PANTALLA COMPLETA Y PRESETS
+// ============================================================
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+        guardarLog("⛶ Pantalla completa activada.");
+    } else {
+        document.exitFullscreen();
+        guardarLog("⛶ Salida de pantalla completa.");
+    }
+}
+window.toggleFullscreen = toggleFullscreen;
+
+function guardarPreset() {
+    const preset = {
+        modo: modoDimension,
+        cuantico: customUniforms.uCuantico.value,
+        glitch: customUniforms.uGlitch.value,
+        tormenta: customUniforms.uTormenta.value,
+        speed: parseFloat(speedSlider.value),
+        size: parseFloat(sizeSlider.value),
+        bloom: parseFloat(bloomSlider.value),
+        color: parseFloat(colorSlider.value),
+        fecha: new Date().toISOString()
+    };
+    const presets = JSON.parse(localStorage.getItem('cymatic_presets') || '[]');
+    presets.push(preset);
+    localStorage.setItem('cymatic_presets', JSON.stringify(presets));
+    guardarLog("💾 Preset guardado en localStorage.");
+}
+window.guardarPreset = guardarPreset;
+
+// ============================================================
+// 5. MOTOR THREE.JS CON SHADERS (CÓDIGO COMPLETO Y CORREGIDO)
+// ============================================================
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x010206, 0.012);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 6, 12);
+
+const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById("canvas-kronos"),
+    antialias: true,
+    preserveDrawingBuffer: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// OrbitControls (opcional, desactivamos para dejar la cámara fija en el hero)
+// const controls = new THREE.OrbitControls(camera, renderer.domElement);
+// controls.enableDamping = true;
+
+// ===== UNIFORMS =====
+const customUniforms = {
+    uTime: { value: 0.0 },
+    uAudio: { value: 0.0 },
+    uDimension: { value: 1.0 },
+    uCuantico: { value: 0.0 },
+    uGlitch: { value: 0.0 },
+    uTormenta: { value: 0.0 },
+    uShockwaveTime: { value: -1.0 },
+    uCymaticFreq: { value: 1.6 },
+    uSizeMultiplier: { value: 1.8 },
+    uColorShift: { value: 0.5 }
+};
+
+// ===== SHADERS =====
+const vertexShaderCode = `
+    uniform float uTime;
+    uniform float uAudio;
+    uniform float uDimension;
+    uniform float uCuantico;
+    uniform float uGlitch;
+    uniform float uTormenta;
+    uniform float uShockwaveTime;
+    uniform float uCymaticFreq;
+    uniform float uSizeMultiplier;
+    uniform float uColorShift;
+    
+    attribute vec3 aTarget1D;
+    attribute vec3 aTarget2D;
+    attribute vec3 aTarget3D;
+    attribute vec3 aTarget4D;
+    attribute vec3 aTarget5D;
+    attribute float aRandomPhase;
+    
+    varying vec3 vColor;
+    
+    float hash(float n) { return fract(sin(n) * 43758.5453123); }
+    
+    void main() {
+        vec3 computedPosition = aTarget1D;
+        if (uDimension == 2.0) computedPosition = aTarget2D;
+        else if (uDimension == 3.0) computedPosition = aTarget3D;
+        else if (uDimension == 4.0) computedPosition = aTarget4D;
+        else if (uDimension == 5.0) computedPosition = aTarget5D;
+        
+        float pulseTime = uTime * uCymaticFreq;
+        
+        if (uCuantico > 0.5) {
+            computedPosition.xyz += vec3(
+                sin(pulseTime + aRandomPhase),
+                cos(pulseTime - aRandomPhase),
+                sin(pulseTime * 0.5 + aRandomPhase)
+            ) * (0.6 + uAudio * 0.02);
+        }
+        
+        if (uTormenta > 0.5) {
+            float theta = pulseTime * 1.2 + aRandomPhase;
+            float r = length(computedPosition.xz) + sin(pulseTime) * 0.4;
+            computedPosition.x = cos(theta) * r;
+            computedPosition.z = sin(theta) * r;
+        }
+        
+        if (uShockwaveTime >= 0.0) {
+            float dist = length(computedPosition);
+            float waveRadius = uShockwaveTime * 22.0;
+            float waveWidth = 1.8;
+            if (dist > waveRadius - waveWidth && dist < waveRadius + waveWidth) {
+                computedPosition += normalize(computedPosition) * (1.0 - (dist / 22.0)) * 4.0;
+            }
+        }
+        
+        if (uGlitch > 0.5 && hash(floor(pulseTime * 12.0) + aRandomPhase) > 0.88) {
+            computedPosition.xyz += (hash(aRandomPhase) - 0.5) * 2.5;
+        }
+        
+        computedPosition.y += sin(pulseTime * 4.0 + aRandomPhase) * (uAudio * 0.025);
+        
+        // Color con desplazamiento armónico
+        float hue = uColorShift + 0.2 * sin(uTime * 0.1 + aRandomPhase);
+        if (uDimension == 1.0) vColor = vec3(0.0, 1.0, 0.7);
+        else if (uDimension == 2.0) vColor = vec3(1.0, 0.5, 0.1);
+        else if (uDimension == 3.0) vColor = vec3(0.1, 0.6, 1.0);
+        else if (uDimension == 4.0) vColor = vec3(0.1, 1.0, 0.4);
+        else if (uDimension == 5.0) vColor = vec3(0.9, 0.1, 1.0);
+        // Mezcla con desplazamiento cromático
+        vColor = mix(vColor, vec3(1.0, 0.5, 0.8), 0.3 * uColorShift);
+        
+        vec4 mvPosition = modelViewMatrix * vec4(computedPosition, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = (uSizeMultiplier * (1.2 + (uAudio * 0.04))) * (350.0 / -mvPosition.z);
+    }
+`;
+
+const fragmentShaderCode = `
+    varying vec3 vColor;
+    void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+        gl_FragColor = vec4(vColor, smoothstep(0.5, 0.1, dist) * 0.9);
+    }
+`;
+
+// ============================================================
+// 6. GENERACIÓN DE DATOS (16.000 PARTÍCULAS · 5 TOPOLOGÍAS)
+// ============================================================
+const COUNT = 16000;
+const cymaticsGeometry = new THREE.BufferGeometry();
+const positions = new Float32Array(COUNT * 3);
+const target1D = new Float32Array(COUNT * 3);
+const target2D = new Float32Array(COUNT * 3);
+const target3D = new Float32Array(COUNT * 3);
+const target4D = new Float32Array(COUNT * 3);
+const target5D = new Float32Array(COUNT * 3);
+const randomPhase = new Float32Array(COUNT);
+
+for (let i = 0; i < COUNT; i++) {
+    const i3 = i * 3;
+    randomPhase[i] = Math.random() * Math.PI * 2.0;
+    
+    // 1. CHLADNI
+    const cx = (Math.random() - 0.5) * 15.0;
+    const cz = (Math.random() - 0.5) * 15.0;
+    const cy = Math.cos(3.0 * cx) * Math.cos(2.0 * cz) - Math.cos(2.0 * cx) * Math.cos(3.0 * cz);
+    target1D[i3] = cx; target1D[i3+1] = cy * 0.6; target1D[i3+2] = cz;
+    
+    // 2. TOROIDE ÁUREO
+    const u = Math.random() * Math.PI * 2;
+    const v = Math.random() * Math.PI * 2;
+    target2D[i3] = (4.5 + 1.6 * Math.cos(v)) * Math.cos(u);
+    target2D[i3+1] = 1.6 * Math.sin(v);
+    target2D[i3+2] = (4.5 + 1.6 * Math.cos(v)) * Math.sin(u);
+    
+    // 3. METATRÓN
+    const fSel = i % 8;
+    let baseVec = new THREE.Vector3(1,1,1);
+    if (fSel === 1) baseVec.set(-1,1,1); if (fSel === 2) baseVec.set(1,-1,1);
+    if (fSel === 3) baseVec.set(1,1,-1); if (fSel === 4) baseVec.set(-1,-1,1);
+    if (fSel === 5) baseVec.set(-1,1,-1); if (fSel === 6) baseVec.set(1,-1,-1);
+    if (fSel === 7) baseVec.set(-1,-1,-1);
+    baseVec.normalize().multiplyScalar(3.2 + Math.random() * 1.5);
+    target3D[i3] = baseVec.x; target3D[i3+1] = baseVec.y; target3D[i3+2] = baseVec.z;
+    
+    // 4. FLOR DE LA VIDA
+    const cIdx = i % 7;
+    const aRad = (cIdx === 0) ? 0 : (cIdx - 1) * (Math.PI / 3);
+    const rOff = (cIdx === 0) ? 0 : 2.6;
+    const iRad = Math.random() * 2.2;
+    const iAng = Math.random() * Math.PI * 2;
+    target4D[i3] = Math.cos(aRad) * rOff + Math.cos(iAng) * iRad;
+    target4D[i3+1] = (Math.random() - 0.5) * 0.2;
+    target4D[i3+2] = Math.sin(aRad) * rOff + Math.sin(iAng) * iRad;
+    
+    // 5. MERKABA
+    const isUp = (i % 2 === 0);
+    const hM = (Math.random() - 0.5) * 4.5;
+    const rM = isUp ? (2.2 - hM * 0.5) : (2.2 + hM * 0.5);
+    const mAng = (Math.floor(Math.random() * 3) * (2.0 * Math.PI / 3)) + (hM * 0.2);
+    target5D[i3] = Math.cos(mAng) * Math.max(0.0, rM);
+    target5D[i3+1] = hM;
+    target5D[i3+2] = Math.sin(mAng) * Math.max(0.0, rM);
+    
+    positions[i3] = target1D[i3];
+    positions[i3+1] = target1D[i3+1];
+    positions[i3+2] = target1D[i3+2];
+}
+
+cymaticsGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+cymaticsGeometry.setAttribute("aTarget1D", new THREE.BufferAttribute(target1D, 3));
+cymaticsGeometry.setAttribute("aTarget2D", new THREE.BufferAttribute(target2D, 3));
+cymaticsGeometry.setAttribute("aTarget3D", new THREE.BufferAttribute(target3D, 3));
+cymaticsGeometry.setAttribute("aTarget4D", new THREE.BufferAttribute(target4D, 3));
+cymaticsGeometry.setAttribute("aTarget5D", new THREE.BufferAttribute(target5D, 3));
+cymaticsGeometry.setAttribute("aRandomPhase", new THREE.BufferAttribute(randomPhase, 1));
+
+const cymaticsMaterial = new THREE.ShaderMaterial({
+    uniforms: customUniforms,
+    vertexShader: vertexShaderCode,
+    fragmentShader: fragmentShaderCode,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+const pointsMesh = new THREE.Points(cymaticsGeometry, cymaticsMaterial);
+scene.add(pointsMesh);
+
+// ============================================================
+// 7. POST-PROCESADO (BLOOM)
+// ============================================================
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene, camera));
+const bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    0.80, 0.4, 0.15
+);
+composer.addPass(bloomPass);
+
+// ============================================================
+// 8. TECLADO
+// ============================================================
+window.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (["1","2","3","4","5"].includes(e.key)) {
+        modoDimension = parseInt(e.key);
+        customUniforms.uDimension.value = modoDimension;
+        const nombres = ["CHLADNI", "TOROIDE", "METATRÓN", "FLOR DE LA VIDA", "MERKABA"];
+        guardarLog(`🌀 Modo: ${nombres[modoDimension-1]}`);
+    } else if (k === 'q') {
+        customUniforms.uCuantico.value = customUniforms.uCuantico.value > 0.5 ? 0.0 : 1.0;
+        guardarLog(`⚛️ Cuántico: ${customUniforms.uCuantico.value > 0.5 ? 'ACTIVO' : 'INACTIVO'}`);
+    } else if (k === 'g') {
+        customUniforms.uGlitch.value = customUniforms.uGlitch.value > 0.5 ? 0.0 : 1.0;
+        guardarLog(`📺 Glitch: ${customUniforms.uGlitch.value > 0.5 ? 'ON' : 'OFF'}`);
+    } else if (k === 't') {
+        customUniforms.uTormenta.value = customUniforms.uTormenta.value > 0.5 ? 0.0 : 1.0;
+        guardarLog(`🌪️ Tormenta: ${customUniforms.uTormenta.value > 0.5 ? 'ACTIVA' : 'INACTIVA'}`);
+    } else if (k === 'c') {
+        customUniforms.uShockwaveTime.value = 0.0;
+        guardarLog("💥 Onda de choque detonada.");
+    }
+});
+
+// ============================================================
+// 9. BUCLE DE ANIMACIÓN
+// ============================================================
+let lastTime = performance.now(), frameCount = 0;
+const clock = new THREE.Clock();
+
+function animar() {
+    requestAnimationFrame(animar);
+    const delta = clock.getDelta();
+    const time = clock.getElapsedTime();
+    frameCount++;
+    const now = performance.now();
+    if (now >= lastTime + 1000) {
+        // FPS opcional
+        frameCount = 0;
+        lastTime = now;
+    }
+    
+    customUniforms.uCymaticFreq.value = parseFloat(speedSlider.value);
+    customUniforms.uSizeMultiplier.value = parseFloat(sizeSlider.value);
+    customUniforms.uTime.value = time;
+    customUniforms.uColorShift.value = parseFloat(colorSlider.value);
+    
+    // Audio FFT
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (i < FFT_SIZE) {
+                const h = (dataArray[i] / 255) * 100;
+                fftBars[i].style.height = h + "%";
+            }
+        }
+        nivelAudio = sum / dataArray.length;
+        customUniforms.uAudio.value = nivelAudio;
+        // Modulación de osciladores
+        osciladores.forEach(o => {
+            try { o.osc.frequency.setValueAtTime(o.base + (nivelAudio * 0.3), audioContext.currentTime); } catch(e) {}
+        });
+    }
+    
+    // Onda de choque
+    if (customUniforms.uShockwaveTime.value >= 0.0) {
+        customUniforms.uShockwaveTime.value += delta * 0.75;
+        if (customUniforms.uShockwaveTime.value > 1.0) customUniforms.uShockwaveTime.value = -1.0;
+    }
+    
+    // Rotación sutil automática de cámara
+    pointsMesh.rotation.y = time * 0.04;
+    pointsMesh.rotation.x = Math.sin(time * 0.02) * 0.1;
+    camera.lookAt(0, 0, 0);
+    
+    composer.render();
+}
+
+// ============================================================
+// 10. REDIMENSIONAMIENTO
+// ============================================================
+window.addEventListener('resize', () => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
+});
+
+// ============================================================
+// 11. INICIO
+// ============================================================
+guardarLog("🚀 CYMATIC STUDIO v13.0 · Motor iniciado.");
+animar();
+console.log("✅ CYMATIC STUDIO PRO v13.0 cargado correctamente.");
+</script>
+</body>
+</html>
