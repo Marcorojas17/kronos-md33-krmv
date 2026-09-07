@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="folio" content="5204160405358537">
+<meta name="sha" content="a4ff808e">
+<meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>KRONOS MATRIX v6.1 · Evolución Definitiva</title>
+<style>
+    :root {
+        --neon-cyan: #00ffcc;
+        --neon-blue: #00aaff;
+        --neon-magenta: #ff00ff;
+        --hud-bg: rgba(2, 6, 8, 0.88);
+        --border-color: rgba(0, 255, 204, 0.25);
+    }
+    body, html { 
+        margin: 0; padding: 0; overflow: hidden; 
+        background: #000307; 
+        font-family: 'SF Mono', 'Courier New', monospace; color: var(--neon-cyan); 
+    }
+    canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+    .hud { 
+        position: absolute; z-index: 10; background: var(--hud-bg); 
+        padding: 20px; border: 1px solid var(--border-color); border-radius: 12px; 
+        font-size: 11px; line-height: 1.6; 
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,255,204,0.03); 
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: auto;
+        user-select: none;
+    }
+    .hud:hover { border-color: rgba(0, 255, 204, 0.7); box-shadow: 0 0 40px rgba(0, 255, 204, 0.2), 0 20px 50px rgba(0,0,0,0.9); }
+    #hud-izq { top: 20px; left: 20px; width: 340px; }
+    #hud-der { top: 20px; right: 20px; width: 340px; max-height: 500px; overflow-y: auto; scrollbar-width: none; }
+    #hud-der::-webkit-scrollbar { display: none; }
+    .btn { 
+        background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue)); color: #000; 
+        border: none; padding: 11px; width: 100%; font-weight: bold; font-family: inherit;
+        cursor: pointer; margin-top: 10px; border-radius: 6px; letter-spacing: 1px;
+        transition: all 0.2s ease;
+    }
+    .btn:hover { background: #fff; box-shadow: 0 0 20px rgba(0, 255, 204, 0.5); transform: translateY(-1px); }
+    .btn:active { transform: translateY(1px); }
+    .log { 
+        border-left: 3px solid var(--neon-cyan); padding: 6px 10px; margin: 6px 0; 
+        color: #bbf7ec; font-size: 10px; background: rgba(0, 255, 204, 0.02); 
+        animation: scanline 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .resaltado { color: #fff; font-weight: bold; text-shadow: 0 0 8px var(--neon-cyan); }
+    .titulo { 
+        color: var(--neon-cyan); text-shadow: 0 0 12px rgba(0, 255, 204, 0.6); 
+        letter-spacing: 3px; font-weight: bold; margin-bottom: 12px; text-align: center;
+    }
+    .shortcuts { font-size: 10px; color: #7da0a0; margin: 12px 0; padding: 10px; background: rgba(0,0,0,0.5); border-radius: 6px; border: 1px solid rgba(255,255,255,0.03); }
+    @keyframes scanline { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+    .fft-indicator {
+        width: 100%; height: 20px; background: rgba(0,0,0,0.4); border-radius: 4px;
+        margin-top: 6px; overflow: hidden; border: 1px solid rgba(0,255,204,0.1);
+        display: flex; align-items: flex-end;
+    }
+    .fft-indicator .bar {
+        height: 100%; background: linear-gradient(to top, var(--neon-cyan), var(--neon-magenta));
+        transition: width 0.05s;
+        min-width: 2px;
+    }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div class="hud" id="hud-izq">
+    <div class="titulo">◢ KRONOS MATRIX V6.1 ◣</div>
+    <div>[NUCLEO]: <span class="resaltado">MT01JAAF a4ff808e</span></div>
+    <div>[MODO]: <span id="txt-dimension" class="resaltado" style="color:var(--neon-cyan)">1D FILAMENTO CUANTICO</span></div>
+    <div>[FPS]: <span id="fps" class="resaltado">60</span> | [AUDIO]: <span id="txt-audio">SILENCIOSO</span></div>
+    <div class="fft-indicator" id="fftMeter"><div class="bar" style="width:0%"></div></div>
+    <div style="margin:8px 0; border-top:1px dashed rgba(0,255,204,0.3)"></div>
+    <div class="shortcuts">
+        <strong>[COMANDOS OPERATIVOS]</strong><br>
+        • ESPACIO : Sintetizar Cristal de Red<br>
+        • 1 / 2 / 3 : Forzar Dimensión (1D, 2D, 3D)<br>
+        • Q : Fluctuación Espacial Libre (Ψ)<br>
+        • G : Inyectar Ruido Glitch en Vértices<br>
+        • T : Activar Tormenta Cuántica<br>
+        • C : Onda de Choque<br>
+        • W, A, S, D : Modular Vector de Cámara<br>
+        • R : Restablecer Posición de Lente<br>
+        • P : Volcar Captura RAW a PNG
+    </div>
+    <button class="btn" id="btn-micro">▶ INTERCEPTAR MICROFONO</button>
+    <button class="btn" id="btn-synth" style="background: linear-gradient(135deg, var(--neon-magenta), var(--neon-blue)); color: #fff;">♪ MATRIZ SINTETIZADORA EN LÍNEA</button>
+    <div style="font-size:8px; margin-top:12px; opacity:.4; text-align: center; letter-spacing: 0.5px;">
+        TRACE: KRONOS-TRACE-PVA-5204160405358537-MT01JAAF<br>NODO MATRIZ: 2607146379465
+    </div>
+</div>
+
+<div class="hud" id="hud-der">
+    <div class="titulo">LEGADO HISTÓRICO DE LOGS</div>
+    <div id="historial"></div>
+</div>
+
+<canvas id="canvas-kronos"></canvas>
+
+<script>
+// ========================================================
+// 1. ESTADO GLOBAL Y CONFIGURACIÓN
+// ========================================================
+let modoDimension = 1, modoCuantico = false, glitchActivo = false, tormentaActiva = false;
+let audioContext, analyser, dataArray, nivelAudio = 0, synthActivo = false, osciladores = [];
+let biquadFilter;
+const SHA = "a4ff808e";
+let shockWaveActive = false;
+let shockTime = 0;
+
+// ========================================================
+// 2. HISTORIAL (LOCALSTORAGE)
+// ========================================================
+function guardar(info) {
+    try {
+        let logs = JSON.parse(localStorage.getItem("kronos_legado_v6") || "[]");
+        logs.unshift("[" + new Date().toLocaleTimeString() + "] " + info);
+        if (logs.length > 14) logs.pop();
+        localStorage.setItem("kronos_legado_v6", JSON.stringify(logs));
+        renderHistorial();
+    } catch(e) { console.warn("No se pudo guardar en localStorage", e); }
+}
+function renderHistorial() {
+    let logs = [];
+    try { logs = JSON.parse(localStorage.getItem("kronos_legado_v6") || "[]"); } catch(e) { logs = []; }
+    if(logs.length === 0) logs = ["[00:00:00] MATRIZ COMPILADA: Esperando flujo..."];
+    document.getElementById("historial").innerHTML = logs.map(x => `<div class="log">${x}</div>`).join("");
+}
+renderHistorial();
+
+// ========================================================
+// 3. AUDIO - MICRÓFONO Y SINTETIZADOR
+// ========================================================
+document.getElementById("btn-micro").addEventListener("click", async () => {
+    try {
+        let stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        initAudio();
+        let src = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 64;
+        src.connect(biquadFilter);
+        biquadFilter.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        document.getElementById("btn-micro").innerText = "● CANAL MICRO ABIERTO";
+        document.getElementById("txt-audio").innerText = "MODULANDO // " + SHA;
+        document.getElementById("btn-micro").style.background = "#fff";
+        document.getElementById("btn-micro").style.color = "#000";
+        guardar("Captura de hardware de audio enlazada.");
+    } catch (e) {
+        alert("Microfóno restringido por el sistema operativo. Permite el acceso en la configuración del navegador.");
+        guardar("ERROR: No se pudo acceder al micrófono.");
+    }
+});
+
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        biquadFilter = audioContext.createBiquadFilter();
+        biquadFilter.type = "lowpass";
+        biquadFilter.frequency.setValueAtTime(1000, audioContext.currentTime);
+        biquadFilter.Q.setValueAtTime(1.5, audioContext.currentTime);
+        // Conectar el filtro al destino para que el sintetizador suene
+        biquadFilter.connect(audioContext.destination);
+    }
+}
+
+document.getElementById("btn-synth").addEventListener("click", () => {
+    initAudio();
+    synthActivo = !synthActivo;
+    if (synthActivo) {
+        document.getElementById("btn-synth").innerText = "■ CLAUSURAR OSCILADORES";
+        // Crear 4 osciladores con armónicos
+        for (let i = 0; i < 4; i++) {
+            let osc = audioContext.createOscillator();
+            let gain = audioContext.createGain();
+            osc.type = i % 2 === 0 ? "sine" : "sawtooth";
+            osc.frequency.value = 60 * (i + 1);
+            gain.gain.value = 0.015;
+            osc.connect(gain);
+            gain.connect(biquadFilter);
+            osc.start();
+            osciladores.push({ osc, gain, base: 60 * (i + 1) });
+        }
+        guardar("Sintetizador sub-armónico polifónico activo.");
+    } else {
+        document.getElementById("btn-synth").innerText = "♪ MATRIZ SINTETIZADORA EN LÍNEA";
+        osciladores.forEach(o => { try { o.osc.stop(); } catch(e) {} });
+        osciladores = [];
+        guardar("Sintetizador desconectado.");
+    }
+});
+
+// ========================================================
+// 4. MOTOR GRÁFICO THREE.JS
+// ========================================================
+let scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000307, 0.02);
+
+let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById("canvas-kronos"),
+    antialias: true,
+    preserveDrawingBuffer: true,
+    alpha: false
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+let targetCameraPos = new THREE.Vector3(0, 2, 7);
+camera.position.copy(targetCameraPos);
+
+let mouseX = 0, mouseY = 0;
+window.addEventListener("mousemove", e => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+    if (biquadFilter && audioContext && audioContext.state === 'running') {
+        let cutoff = ((e.clientX / window.innerWidth) * 4000) + 150;
+        biquadFilter.frequency.setValueAtTime(cutoff, audioContext.currentTime);
+    }
+});
+
+// ----- Textura de partículas -----
+let pCanvas = document.createElement('canvas');
+pCanvas.width = 32; pCanvas.height = 32;
+let pctx = pCanvas.getContext('2d');
+let grad = pctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+grad.addColorStop(0, 'rgba(255,255,255,1)');
+grad.addColorStop(0.3, 'rgba(255,255,255,0.9)');
+grad.addColorStop(1, 'rgba(255,255,255,0)');
+pctx.fillStyle = grad;
+pctx.fillRect(0, 0, 32, 32);
+let pTexture = new THREE.CanvasTexture(pCanvas);
+
+// ----- Partículas (Boids) -----
+const COUNT = 4000;
+let geometry = new THREE.BufferGeometry();
+let positions = new Float32Array(COUNT * 3);
+let boids = [];
+
+for (let i = 0; i < COUNT; i++) {
+    positions[i*3] = (Math.random() - 0.5) * 12;
+    positions[i*3+1] = 0;
+    positions[i*3+2] = 0;
+    boids.push({
+        current: new THREE.Vector3(positions[i*3], 0, 0),
+        target1D: new THREE.Vector3((Math.random() - 0.5) * 12, 0, 0),
+        target2D: new THREE.Vector3((Math.random() - 0.5) * 9, (Math.random() - 0.5) * 9, 0),
+        target3D: new THREE.Vector3((Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6),
+        vel: new THREE.Vector3((Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.03, (Math.random() - 0.5) * 0.03),
+        fase: Math.random() * Math.PI * 2
+    });
+}
+geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+
+let material = new THREE.PointsMaterial({
+    color: 0x00ffcc,
+    size: 0.06,
+    transparent: true,
+    opacity: 0.9,
+    map: pTexture,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+let points = new THREE.Points(geometry, material);
+scene.add(points);
+
+// ----- Terreno reactivo -----
+let meshGeo = new THREE.PlaneGeometry(30, 30, 60, 60);
+let meshMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true, transparent: true, opacity: 0.07 });
+let terrain = new THREE.Mesh(meshGeo, meshMat);
+terrain.rotation.x = -Math.PI / 2;
+terrain.position.y = -3.5;
+scene.add(terrain);
+
+// ----- Cristales -----
+let cristales = [];
+let cristalGeo = new THREE.OctahedronGeometry(0.22, 0);
+
+function crearCristal() {
+    let idx = Math.floor(Math.random() * COUNT);
+    let p = boids[idx].current;
+    let col = modoDimension === 1 ? 0x00ffcc : (modoDimension === 2 ? 0xffffff : 0x00aaff);
+    let mat = new THREE.MeshBasicMaterial({
+        color: col,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.85
+    });
+    let mesh = new THREE.Mesh(cristalGeo, mat);
+    mesh.position.copy(p);
+    scene.add(mesh);
+    cristales.push(mesh);
+    // Sonido al crear
+    if (audioContext && audioContext.state === 'running') {
+        try {
+            let osc = audioContext.createOscillator();
+            let g = audioContext.createGain();
+            osc.frequency.value = 400 + Math.random() * 800;
+            g.gain.setValueAtTime(0.1, audioContext.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.6);
+            osc.connect(g);
+            g.connect(biquadFilter);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.6);
+        } catch(e) {}
+    }
+    guardar(`CRISTAL COMPILADO [${p.x.toFixed(1)}, ${p.y.toFixed(1)}]`);
+}
+
+// ----- Onda de choque -----
+function activarOndaChoque() {
+    shockWaveActive = true;
+    shockTime = 0;
+    guardar("ONDAS DE CHOQUE INYECTADAS");
+}
+
+// ========================================================
+// 5. CAPTURA DE PANTALLA
+// ========================================================
+function capturarFoto() {
+    renderer.render(scene, camera);
+    let a = document.createElement("a");
+    a.download = `KRONOS_MATRIX_V6_${Date.now()}.png`;
+    a.href = renderer.domElement.toDataURL("image/png");
+    a.click();
+    guardar("VOLCADO GRÁFICO GUARDADO COMO PNG.");
+}
+
+// ========================================================
+// 6. CONTROL DE TECLADO
+// ========================================================
+let teclas = {};
+window.addEventListener("keydown", e => {
+    let k = e.key.toLowerCase();
+    teclas[k] = true;
+    
+    if (e.key === "1") {
+        modoDimension = 1; material.color.setHex(0x00ffcc);
+        document.getElementById("txt-dimension").innerText = "1D FILAMENTO CUANTICO";
+        guardar("Transición dimensional: 1D");
+    } else if (e.key === "2") {
+        modoDimension = 2; material.color.setHex(0xffffff);
+        document.getElementById("txt-dimension").innerText = "2D BIG BANG COLECTIVO";
+        guardar("Transición dimensional: 2D");
+    } else if (e.key === "3") {
+        modoDimension = 3; material.color.setHex(0x00aaff);
+        document.getElementById("txt-dimension").innerText = "3D PAISAJE ABSOLUTO";
+        guardar("Transición dimensional: 3D");
+    } else if (k === "q") {
+        modoCuantico = !modoCuantico;
+        document.getElementById("txt-dimension").innerText = modoCuantico ? "FLUCTUACIÓN CAÓTICA (Ψ)" : "MATRIZ ESTABILIZADA";
+        material.color.setHex(modoCuantico ? 0xff00ff : 0x00ffcc);
+        guardar(`Estado cuántico alterado: ${modoCuantico}`);
+    } else if (k === "g") {
+        glitchActivo = !glitchActivo;
+        guardar(`Inyección de ruido Glitch: ${glitchActivo}`);
+    } else if (k === "t") {
+        tormentaActiva = !tormentaActiva;
+        guardar(`Tormenta cuántica: ${tormentaActiva}`);
+    } else if (k === "c") {
+        activarOndaChoque();
+    } else if (k === "r") {
+        targetCameraPos.set(0, 2, 7);
+        guardar("Posición óptica restablecida.");
+    } else if (e.key === " ") {
+        e.preventDefault();
+        crearCristal();
+    } else if (k === "p") {
+        capturarFoto();
+    }
+});
+window.addEventListener("keyup", e => { teclas[e.key.toLowerCase()] = false; });
+
+// ========================================================
+// 7. BUCLE PRINCIPAL DE ANIMACIÓN
+// ========================================================
+let lastTime = performance.now(), frameCount = 0;
+let clock = new THREE.Clock();
+
+function animar() {
+    requestAnimationFrame(animar);
+    let time = clock.getElapsedTime();
+    frameCount++;
+    let now = performance.now();
+    if (now >= lastTime + 1000) {
+        document.getElementById("fps").innerText = Math.round((frameCount * 1000) / (now - lastTime));
+        frameCount = 0; lastTime = now;
+    }
+
+    // ===== PROCESAMIENTO DE AUDIO =====
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+        nivelAudio = sum / dataArray.length;
+        // Actualizar medidor FFT
+        let pct = Math.min(100, (nivelAudio / 255) * 100);
+        document.querySelector('#fftMeter .bar').style.width = pct + '%';
+        // Modulación de osciladores por audio
+        osciladores.forEach((o, idx) => {
+            try {
+                o.osc.frequency.setValueAtTime(o.base + (nivelAudio * 0.4), audioContext.currentTime);
+            } catch(e) {}
+        });
+    }
+
+    // ===== DEFORMACIÓN DEL TERRENO (FFT + ONDAS) =====
+    let posArr = terrain.geometry.attributes.position.array;
+    for (let i = 0; i < posArr.length; i += 3) {
+        let x = posArr[i];
+        let z = posArr[i+1];
+        let dist = Math.sqrt(x*x + z*z);
+        let alturaBase = Math.sin(dist * 0.3 - time * 2) * 0.2;
+        let audioAltura = (nivelAudio / 255) * 0.5;
+        let shockAltura = 0;
+        if (shockWaveActive) {
+            shockTime += 0.02;
+            let radio = shockTime * 2;
+            let intensidad = Math.max(0, 1 - (dist - radio) * 0.1);
+            shockAltura = Math.sin(dist * 5 - time * 10) * intensidad * 0.8;
+            if (shockTime > 4) shockWaveActive = false;
+        }
+        posArr[i+2] = alturaBase + audioAltura * 0.3 + shockAltura;
+    }
+    terrain.geometry.attributes.position.needsUpdate = true;
+
+    // ===== ACTUALIZACIÓN DE PARTÍCULAS (BOIDS) =====
+    let pAttr = geometry.attributes.position.array;
+    for (let i = 0; i < COUNT; i++) {
+        let boid = boids[i];
+        let target = boid.target1D;
+        
+        if (modoCuantico) {
+            boid.vel.x += Math.sin(time + boid.fase) * 0.006;
+            boid.vel.y += Math.cos(time - boid.fase) * 0.006;
+            boid.vel.z += Math.sin(time * 0.5 + boid.fase) * 0.006;
+            boid.current.add(boid.vel);
+            boid.vel.multiplyScalar(0.97);
+        } else {
+            if (modoDimension === 1) target = boid.target1D;
+            else if (modoDimension === 2) target = boid.target2D;
+            else if (modoDimension === 3) target = boid.target3D;
+            boid.current.lerp(target, 0.04);
+        }
+
+        // Efecto tormenta
+        if (tormentaActiva) {
+            boid.current.x += (Math.random() - 0.5) * 0.08;
+            boid.current.y += (Math.random() - 0.5) * 0.08;
+            boid.current.z += (Math.random() - 0.5) * 0.08;
+        }
+
+        // Audio offset
+        let audioOffset = (nivelAudio / 255) * 0.15 * Math.sin(time * 6 + boid.fase);
+        
+        // Glitch en vértices
+        let gx = (glitchActivo && Math.random() > 0.93) ? (Math.random() - 0.5) * 1.2 : 0;
+        let gy = (glitchActivo && Math.random() > 0.93) ? (Math.random() - 0.5) * 1.2 : 0;
+        let gz = (glitchActivo && Math.random() > 0.93) ? (Math.random() - 0.5) * 1.2 : 0;
+
+        pAttr[i*3] = boid.current.x + gx;
+        pAttr[i*3+1] = boid.current.y + audioOffset + gy;
+        pAttr[i*3+2] = boid.current.z + gz;
+    }
+    geometry.attributes.position.needsUpdate = true;
+
+    // ===== ROTACIÓN DE CRISTALES =====
+    cristales.forEach((c, idx) => {
+        c.rotation.y += 0.03;
+        c.rotation.x += 0.015;
+        c.position.y += Math.sin(time * 3 + idx) * 0.002;
+    });
+
+    // ===== CONTROL DE CÁMARA (WASD + MOUSE) =====
+    if (teclas['w']) targetCameraPos.y += 0.06;
+    if (teclas['s']) targetCameraPos.y -= 0.06;
+    if (teclas['a']) targetCameraPos.x -= 0.06;
+    if (teclas['d']) targetCameraPos.x += 0.06;
+    // Límites de cámara
+    targetCameraPos.x = Math.max(-6, Math.min(6, targetCameraPos.x));
+    targetCameraPos.y = Math.max(-2, Math.min(8, targetCameraPos.y));
+    targetCameraPos.z = Math.max(3, Math.min(12, targetCameraPos.z));
+
+    camera.position.x += (targetCameraPos.x + mouseX * 1.2 - camera.position.x) * 0.04;
+    camera.position.y += (targetCameraPos.y + mouseY * 1.2 - camera.position.y) * 0.04;
+    camera.position.z += (targetCameraPos.z - camera.position.z) * 0.04;
+    camera.lookAt(0, 0, 0);
+
+    // ===== RENDER =====
+    renderer.render(scene, camera);
+}
+
+// ========================================================
+// 8. RESIZE
+// ========================================================
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ========================================================
+// 9. INICIO
+// ========================================================
+guardar("MATRIZ KRONOS V6.1 INICIADA - TODOS LOS SISTEMAS ONLINE");
+animar();
+</script>
+</body>
+</html>
