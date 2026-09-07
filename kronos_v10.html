@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="folio" content="5204160405358537">
+<meta name="sha" content="a4ff808e">
+<meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>KRONOS MATRIX v10.0 · Neural Link Engine</title>
+<style>
+    /* ===== RESET Y HUD ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { 
+        margin: 0; padding: 0; overflow: hidden; 
+        background: #000103; 
+        font-family: 'SF Mono', 'Courier New', monospace; color: #00ffcc; 
+    }
+    canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+    
+    .hud {
+        position: absolute; z-index: 10; 
+        background: rgba(2, 5, 8, 0.94);
+        padding: 18px; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 12px;
+        backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+        box-shadow: 0 25px 60px rgba(0,0,0,0.95), inset 0 0 20px rgba(0,255,204,0.05);
+        user-select: none; pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hud * { pointer-events: auto; }
+    .hud:hover { border-color: rgba(0, 255, 204, 0.8); box-shadow: 0 0 40px rgba(0, 255, 204, 0.25); }
+    #hud-izq { top: 20px; left: 20px; width: 370px; }
+    #hud-der { top: 20px; right: 20px; width: 370px; max-height: 500px; overflow-y: auto; scrollbar-width: none; }
+    #hud-der::-webkit-scrollbar { display: none; }
+    
+    .titulo {
+        color: #00ffcc; text-shadow: 0 0 12px rgba(0,255,204,0.6);
+        letter-spacing: 3px; font-weight: bold; margin-bottom: 10px; text-align: center;
+        font-size: 1.2rem;
+    }
+    .resaltado { color: #fff; font-weight: bold; text-shadow: 0 0 8px #00ffcc; }
+    .log {
+        border-left: 3px solid #00ffcc; padding: 4px 10px; margin: 4px 0;
+        color: #bbf7ec; font-size: 9px; background: rgba(0,255,204,0.02);
+        animation: scanline 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes scanline { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+    
+    .btn {
+        background: linear-gradient(135deg, #00ffcc, #00aaff); color: #000;
+        border: none; padding: 10px; width: 100%; font-weight: bold; font-family: inherit;
+        cursor: pointer; margin-top: 8px; border-radius: 6px; letter-spacing: 1px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn:hover { background: #fff; box-shadow: 0 0 25px rgba(0,255,204,0.6); transform: translateY(-1px); }
+    .btn:active { transform: translateY(1px); }
+    
+    .shortcuts {
+        font-size: 9px; color: #7da0a0; margin: 10px 0; padding: 8px;
+        background: rgba(0,0,0,0.6); border-radius: 6px; border: 1px solid rgba(255,255,255,0.03);
+    }
+    .shortcuts strong { color: #00ffcc; }
+    
+    .fft-container {
+        display: flex; gap: 2px; align-items: flex-end; width: 100%; height: 28px;
+        background: rgba(0,0,0,0.5); border-radius: 6px; padding: 2px;
+        margin-top: 6px; border: 1px solid rgba(0,255,204,0.15); overflow: hidden;
+    }
+    .fft-bar {
+        flex: 1; height: 0%; background: linear-gradient(to top, #00ffcc, #ff00ff);
+        border-radius: 1px; transition: height 0.05s ease;
+    }
+    
+    .control-group {
+        display: flex; flex-direction: column; gap: 6px; margin-top: 8px;
+        background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;
+        border: 1px solid rgba(0,255,204,0.1);
+    }
+    .control-row {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 9px; color: #7da0a0;
+    }
+    .control-row input[type="range"] {
+        width: 55%; background: transparent; accent-color: #00ffcc;
+        cursor: pointer;
+    }
+    .control-row span:first-child { width: 80px; text-align: left; }
+    .control-row span.val-display { min-width: 30px; text-align: right; color: #fff; }
+    
+    .watermark {
+        position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+        z-index: 5; color: rgba(0, 255, 204, 0.10); font-size: 9px;
+        letter-spacing: 5px; pointer-events: none; text-transform: uppercase;
+        font-weight: bold;
+    }
+    
+    /* Galería de capturas (ventana modal) */
+    .gallery-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85); z-index: 100; display: none;
+        justify-content: center; align-items: center; flex-direction: column;
+        backdrop-filter: blur(10px);
+    }
+    .gallery-overlay.active { display: flex; }
+    .gallery-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px; max-width: 90%; max-height: 80%; overflow-y: auto;
+        padding: 20px; background: rgba(0,0,0,0.5); border-radius: 12px;
+        border: 1px solid rgba(0,255,204,0.2);
+    }
+    .gallery-item {
+        background: rgba(0,0,0,0.6); border-radius: 8px; padding: 8px;
+        border: 1px solid rgba(0,255,204,0.1); text-align: center;
+    }
+    .gallery-item img { width: 100%; border-radius: 4px; }
+    .gallery-item .meta { font-size: 8px; color: #7da0a0; margin-top: 4px; }
+    .gallery-close {
+        position: absolute; top: 20px; right: 30px; color: #fff;
+        font-size: 30px; cursor: pointer; z-index: 101;
+    }
+    .gallery-close:hover { color: #00ffcc; }
+    
+    @media (max-width: 750px) {
+        #hud-izq, #hud-der { width: 280px; padding: 10px; font-size: 8px; }
+        #hud-der { max-height: 280px; }
+        .titulo { font-size: 1rem; }
+    }
+</style>
+
+<!-- ===== LIBRERÍAS DESDE CDN ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+</head>
+<body>
+
+<!-- ===== HUD IZQUIERDO ===== -->
+<div class="hud" id="hud-izq">
+    <div class="titulo">◢ KRONOS NEURAL v10 ◣</div>
+    <div>[NUCLEO]: <span class="resaltado">MT01JAAF a4ff808e</span></div>
+    <div>[TOPOLOGÍA]: <span id="txt-dimension" class="resaltado" style="color:#00ffcc">1D FILAMENTO</span></div>
+    <div>[FPS]: <span id="fps" class="resaltado">60</span> | [AUDIO]: <span id="txt-audio">SILENCIOSO</span></div>
+    
+    <div class="fft-container" id="fftMeter"></div>
+    
+    <div class="control-group">
+        <div class="control-row">
+            <span>Velocidad GPU</span>
+            <input type="range" id="speedSlider" min="0" max="2.5" step="0.05" value="1">
+            <span id="speedVal" class="val-display">1.00</span>
+        </div>
+        <div class="control-row">
+            <span>Escala Nodos</span>
+            <input type="range" id="sizeSlider" min="0.2" max="4.0" step="0.1" value="1.5">
+            <span id="sizeVal" class="val-display">1.50</span>
+        </div>
+        <div class="control-row">
+            <span>Filtro Bloom</span>
+            <input type="range" id="bloomSlider" min="0" max="2.0" step="0.02" value="0.75">
+            <span id="bloomVal" class="val-display">0.75</span>
+        </div>
+        <div class="control-row">
+            <span>Intensidad Enlaces</span>
+            <input type="range" id="linkSlider" min="0" max="1.0" step="0.02" value="0.6">
+            <span id="linkVal" class="val-display">0.60</span>
+        </div>
+    </div>
+    
+    <div style="margin:6px 0; border-top:1px dashed rgba(0,255,204,0.3)"></div>
+    <div class="shortcuts">
+        <strong>[CONTRALORÍA TOPOLÓGICA]</strong><br>
+        • 1 / 2 / 3 / 4 / 5 : Modos (1D,2D,3D,Galaxia,Aurora)<br>
+        • Q : Cuántico | G : Glitch | T : Tormenta<br>
+        • C : Onda de choque | ESPACIO : Cristal<br>
+        • P : Captura PNG | R : Reset cámara<br>
+        • Mouse arrastrar : Rotar | Click : Seleccionar cristal
+    </div>
+    <button class="btn" id="btn-micro">▶ MICRÓFONO</button>
+    <button class="btn" id="btn-synth" style="background: linear-gradient(135deg, #ff00ff, #00aaff); color: #fff;">♪ SINTETIZADOR</button>
+    <button class="btn" id="btn-gallery" style="background: linear-gradient(135deg, #ff8800, #ff00cc); color: #fff;">🖼️ GALERÍA DE CAPTURAS</button>
+    <div style="font-size:7px; margin-top:10px; opacity:.4; text-align: center; letter-spacing: 0.5px;">
+        TRACE: KRONOS-TRACE-PVA-5204160405358537-MT01JAAF<br>
+        NEURAL LINK ENGINE v10.0 · ACTIVE
+    </div>
+</div>
+
+<!-- ===== HUD DERECHO (LOGS) ===== -->
+<div class="hud" id="hud-der">
+    <div class="titulo">REGISTRO DE EVENTOS</div>
+    <div id="historial"></div>
+</div>
+
+<!-- ===== GALERÍA OVERLAY ===== -->
+<div class="gallery-overlay" id="galleryOverlay">
+    <span class="gallery-close" id="galleryClose">&times;</span>
+    <div class="gallery-grid" id="galleryGrid"></div>
+</div>
+
+<div class="watermark">KRONOS · NEURAL LINK ENGINE v10</div>
+
+<canvas id="canvas-kronos"></canvas>
+
+<script>
+// ============================================================
+// 1. ESTADO GLOBAL Y AUDIO
+// ============================================================
+let modoDimension = 1, modoCuantico = 0, glitchActivo = 0, tormentaActiva = 0;
+let audioContext, analyser, dataArray, nivelAudio = 0, synthActivo = false, osciladores = [];
+let biquadFilter;
+const SHA = "a4ff808e";
+
+// ===== FFT BARS =====
+const FFT_SIZE = 32;
+const fftContainer = document.getElementById("fftMeter");
+for(let i=0; i<FFT_SIZE; i++) {
+    const bar = document.createElement("div");
+    bar.className = "fft-bar";
+    fftContainer.appendChild(bar);
+}
+const fftBars = document.querySelectorAll(".fft-bar");
+
+// ===== HISTORIAL (LOCALSTORAGE) =====
+function guardar(info) {
+    try {
+        let logs = JSON.parse(localStorage.getItem("kronos_legado_v10") || "[]");
+        logs.unshift("[" + new Date().toLocaleTimeString() + "] " + info);
+        if (logs.length > 15) logs.pop();
+        localStorage.setItem("kronos_legado_v10", JSON.stringify(logs));
+        renderHistorial();
+    } catch(e) {}
+}
+function renderHistorial() {
+    let logs = [];
+    try { logs = JSON.parse(localStorage.getItem("kronos_legado_v10") || "[]"); } catch(e) {}
+    if(logs.length === 0) logs = ["[00:00:00] SISTEMA NEURAL CONECTADO"];
+    document.getElementById("historial").innerHTML = logs.map(x => `<div class="log">${x}</div>`).join("");
+}
+renderHistorial();
+
+// ===== CONTROLES DESLIZANTES =====
+const speedSlider = document.getElementById("speedSlider");
+const speedVal = document.getElementById("speedVal");
+const sizeSlider = document.getElementById("sizeSlider");
+const sizeVal = document.getElementById("sizeVal");
+const bloomSlider = document.getElementById("bloomSlider");
+const bloomVal = document.getElementById("bloomVal");
+const linkSlider = document.getElementById("linkSlider");
+const linkVal = document.getElementById("linkVal");
+
+speedSlider.addEventListener("input", () => { speedVal.textContent = parseFloat(speedSlider.value).toFixed(2); });
+sizeSlider.addEventListener("input", () => { sizeVal.textContent = parseFloat(sizeSlider.value).toFixed(2); });
+bloomSlider.addEventListener("input", () => {
+    bloomVal.textContent = parseFloat(bloomSlider.value).toFixed(2);
+    if (bloomPass) bloomPass.strength = parseFloat(bloomSlider.value);
+});
+linkSlider.addEventListener("input", () => {
+    linkVal.textContent = parseFloat(linkSlider.value).toFixed(2);
+});
+
+// ===== AUDIO: MICRÓFONO =====
+document.getElementById("btn-micro").addEventListener("click", async () => {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        initAudio();
+        const src = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = FFT_SIZE * 2;
+        src.connect(biquadFilter);
+        biquadFilter.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        document.getElementById("btn-micro").innerText = "● MICRO CONECTADO";
+        document.getElementById("txt-audio").innerText = "MODULANDO // " + SHA;
+        document.getElementById("btn-micro").style.background = "#fff";
+        document.getElementById("btn-micro").style.color = "#000";
+        guardar("Micrófono acoplado al bus de datos.");
+    } catch (e) {
+        alert("Permiso de micrófono denegado.");
+    }
+});
+
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        biquadFilter = audioContext.createBiquadFilter();
+        biquadFilter.type = "lowpass";
+        biquadFilter.frequency.setValueAtTime(1200, audioContext.currentTime);
+        biquadFilter.Q.setValueAtTime(2.0, audioContext.currentTime);
+        biquadFilter.connect(audioContext.destination);
+    }
+}
+
+// ===== AUDIO: SINTETIZADOR =====
+document.getElementById("btn-synth").addEventListener("click", () => {
+    initAudio();
+    synthActivo = !synthActivo;
+    if (synthActivo) {
+        document.getElementById("btn-synth").innerText = "■ APAGAR";
+        for (let i = 0; i < 4; i++) {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.type = i % 2 === 0 ? "sine" : "sawtooth";
+            osc.frequency.value = 55 * (i + 1);
+            gain.gain.value = 0.012;
+            osc.connect(gain);
+            gain.connect(biquadFilter);
+            osc.start();
+            osciladores.push({ osc, gain, base: 55 * (i + 1) });
+        }
+        guardar("Sintetizador polifónico activado.");
+    } else {
+        document.getElementById("btn-synth").innerText = "♪ SINTETIZADOR";
+        osciladores.forEach(o => { try { o.osc.stop(); } catch(e) {} });
+        osciladores = [];
+        guardar("Sintetizador desconectado.");
+    }
+});
+
+// ============================================================
+// 2. MOTOR THREE.JS CON POST-PROCESADO (BLOOM)
+// ============================================================
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000103, 0.02);
+
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 3, 9);
+
+const renderer = new THREE.WebGLRenderer({
+    canvas: document.getElementById("canvas-kronos"),
+    antialias: true,
+    preserveDrawingBuffer: true
+});
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+// ===== ORBIT CONTROLS =====
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.06;
+controls.maxDistance = 25;
+controls.minDistance = 2;
+controls.target.set(0, 0, 0);
+
+// ===== UNIFORMS PARA SHADERS =====
+const customUniforms = {
+    uTime: { value: 0.0 },
+    uAudio: { value: 0.0 },
+    uDimension: { value: 1.0 },
+    uCuantico: { value: 0.0 },
+    uGlitch: { value: 0.0 },
+    uTormenta: { value: 0.0 },
+    uShockwaveTime: { value: -1.0 },
+    uSpeed: { value: 1.0 },
+    uSizeMultiplier: { value: 1.5 }
+};
+
+// ===== SHADER VERTEX =====
+const vertexShaderCode = `
+    uniform float uTime;
+    uniform float uAudio;
+    uniform float uDimension;
+    uniform float uCuantico;
+    uniform float uGlitch;
+    uniform float uTormenta;
+    uniform float uShockwaveTime;
+    uniform float uSpeed;
+    uniform float uSizeMultiplier;
+    
+    attribute vec3 aTarget1D;
+    attribute vec3 aTarget2D;
+    attribute vec3 aTarget3D;
+    attribute vec3 aTarget4D;
+    attribute vec3 aTarget5D;
+    attribute float aRandomPhase;
+    
+    varying vec3 vColor;
+    
+    float hash(float n) { return fract(sin(n) * 43758.5453123); }
+    
+    void main() {
+        vec3 computedPosition = aTarget1D;
+        if (uDimension == 2.0) computedPosition = aTarget2D;
+        else if (uDimension == 3.0) computedPosition = aTarget3D;
+        else if (uDimension == 4.0) computedPosition = aTarget4D;
+        else if (uDimension == 5.0) computedPosition = aTarget5D;
+        
+        float timeFactor = uTime * uSpeed;
+        
+        // Cuántico
+        if (uCuantico > 0.5) {
+            computedPosition.x += sin(timeFactor + aRandomPhase) * 1.6;
+            computedPosition.y += cos(timeFactor - aRandomPhase) * 1.6;
+            computedPosition.z += sin(timeFactor * 0.5 + aRandomPhase) * 1.6;
+        }
+        
+        // Tormenta
+        if (uTormenta > 0.5) {
+            float angle = timeFactor * 2.5 + aRandomPhase;
+            float r = length(computedPosition.xz) + sin(timeFactor + aRandomPhase) * 0.4;
+            computedPosition.x = cos(angle) * r;
+            computedPosition.z = sin(angle) * r;
+            computedPosition.y += sin(timeFactor * 3.5 + aRandomPhase) * 1.2;
+        }
+        
+        // Onda de choque
+        if (uShockwaveTime >= 0.0) {
+            float dist = length(computedPosition);
+            float waveRadius = uShockwaveTime * 18.0;
+            float waveWidth = 1.5;
+            if (dist > waveRadius - waveWidth && dist < waveRadius + waveWidth) {
+                float strength = 1.0 - (dist / 18.0);
+                computedPosition += normalize(computedPosition) * strength * 3.0;
+            }
+        }
+        
+        // Glitch
+        if (uGlitch > 0.5 && hash(floor(timeFactor * 20.0) + aRandomPhase) > 0.85) {
+            computedPosition.xyz += (hash(aRandomPhase) - 0.5) * 2.5;
+        }
+        
+        // Modulación por audio
+        computedPosition.y += sin(timeFactor * 6.0 + aRandomPhase) * (uAudio * 0.015);
+        
+        // Color según dimensión
+        if (uDimension == 1.0) vColor = vec3(0.0, 1.0, 0.8);
+        else if (uDimension == 2.0) vColor = vec3(1.0, 1.0, 1.0);
+        else if (uDimension == 3.0) vColor = vec3(0.0, 0.6, 1.0);
+        else if (uDimension == 4.0) vColor = vec3(1.0, 0.7, 0.0);
+        else if (uDimension == 5.0) vColor = vec3(0.7, 0.0, 1.0);
+        if (uCuantico > 0.5) vColor = vec3(1.0, 0.0, 0.5);
+        
+        vec4 mvPosition = modelViewMatrix * vec4(computedPosition, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = (uSizeMultiplier * (1.0 + (uAudio * 0.03))) * (280.0 / -mvPosition.z);
+    }
+`;
+
+const fragmentShaderCode = `
+    varying vec3 vColor;
+    void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+        float alpha = smoothstep(0.5, 0.1, dist) * 0.9;
+        gl_FragColor = vec4(vColor, alpha);
+    }
+`;
+
+// ============================================================
+// 3. GENERACIÓN DE 15.000 PARTÍCULAS CON 5 TOPOLOGÍAS
+// ============================================================
+const COUNT = 15000;
+const neuralGeometry = new THREE.BufferGeometry();
+const positions = new Float32Array(COUNT * 3);
+const target1D = new Float32Array(COUNT * 3);
+const target2D = new Float32Array(COUNT * 3);
+const target3D = new Float32Array(COUNT * 3);
+const target4D = new Float32Array(COUNT * 3);
+const target5D = new Float32Array(COUNT * 3);
+const randomPhase = new Float32Array(COUNT);
+
+for (let i = 0; i < COUNT; i++) {
+    const i3 = i * 3;
+    // 1D
+    target1D[i3] = (Math.random() - 0.5) * 15;
+    // 2D
+    target2D[i3] = (Math.random() - 0.5) * 11;
+    target2D[i3+1] = (Math.random() - 0.5) * 11;
+    // 3D (esfera)
+    const u = Math.random(), v = Math.random();
+    const theta = u * 2.0 * Math.PI;
+    const phi = Math.acos(2.0 * v - 1.0);
+    const r3 = 3.0 + Math.random() * 1.5;
+    target3D[i3] = r3 * Math.sin(phi) * Math.cos(theta);
+    target3D[i3+1] = r3 * Math.sin(phi) * Math.sin(theta);
+    target3D[i3+2] = r3 * Math.cos(phi);
+    // 4D (galaxia espiral)
+    const branch = (i % 3) * (2.0 * Math.PI / 3.0);
+    const r4 = Math.pow(Math.random(), 1.5) * 7.0;
+    const angle4 = r4 * 1.2 + branch;
+    target4D[i3] = Math.cos(angle4) * r4 + (Math.random() - 0.5) * 0.3;
+    target4D[i3+1] = (Math.random() - 0.5) * 0.4;
+    target4D[i3+2] = Math.sin(angle4) * r4 + (Math.random() - 0.5) * 0.3;
+    // 5D (doble hélice)
+    const t5 = (Math.random() - 0.5) * 10.0;
+    const helixOffset = (i % 2 === 0) ? 0.0 : Math.PI;
+    target5D[i3] = Math.sin(t5 * 2.0 + helixOffset) * 1.8;
+    target5D[i3+1] = t5;
+    target5D[i3+2] = Math.cos(t5 * 2.0 + helixOffset) * 1.8;
+    
+    randomPhase[i] = Math.random() * Math.PI * 2.0;
+    positions[i3] = target1D[i3];
+    positions[i3+1] = 0;
+    positions[i3+2] = 0;
+}
+
+neuralGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+neuralGeometry.setAttribute("aTarget1D", new THREE.BufferAttribute(target1D, 3));
+neuralGeometry.setAttribute("aTarget2D", new THREE.BufferAttribute(target2D, 3));
+neuralGeometry.setAttribute("aTarget3D", new THREE.BufferAttribute(target3D, 3));
+neuralGeometry.setAttribute("aTarget4D", new THREE.BufferAttribute(target4D, 3));
+neuralGeometry.setAttribute("aTarget5D", new THREE.BufferAttribute(target5D, 3));
+neuralGeometry.setAttribute("aRandomPhase", new THREE.BufferAttribute(randomPhase, 1));
+
+const neuralMaterial = new THREE.ShaderMaterial({
+    uniforms: customUniforms,
+    vertexShader: vertexShaderCode,
+    fragmentShader: fragmentShaderCode,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+const pointsMesh = new THREE.Points(neuralGeometry, neuralMaterial);
+scene.add(pointsMesh);
+
+// ===== TERRENO INFERIOR =====
+const meshGeo = new THREE.PlaneGeometry(40, 40, 40, 40);
+const meshMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true, transparent: true, opacity: 0.04 });
+const terrain = new THREE.Mesh(meshGeo, meshMat);
+terrain.rotation.x = -Math.PI / 2;
+terrain.position.y = -4.5;
+scene.add(terrain);
+
+// ============================================================
+// 4. SISTEMA DE ENLACES (LINK-NODE MESH) ENTRE CRISTALES Y PARTÍCULAS
+// ============================================================
+let linkLines = null; // será un LineSegments
+let linkPositions = new Float32Array(0);
+
+function actualizarEnlaces(cristalesPos, particlePositions, intensidad) {
+    if (cristalesPos.length === 0 || !particlePositions || intensidad < 0.01) {
+        if (linkLines) { scene.remove(linkLines); linkLines = null; }
+        return;
+    }
+    // Buscar las partículas más cercanas a cada cristal (hasta 3 por cristal)
+    const maxLinks = cristalesPos.length * 3;
+    const newPositions = [];
+    for (const cPos of cristalesPos) {
+        const dists = [];
+        for (let i = 0; i < particlePositions.length; i += 3) {
+            const dx = cPos.x - particlePositions[i];
+            const dy = cPos.y - particlePositions[i+1];
+            const dz = cPos.z - particlePositions[i+2];
+            const d = dx*dx + dy*dy + dz*dz;
+            dists.push({ idx: i, dist: d });
+        }
+        dists.sort((a,b) => a.dist - b.dist);
+        const top = dists.slice(0, 3);
+        for (const t of top) {
+            if (t.dist < 25) { // umbral de distancia
+                newPositions.push(cPos.x, cPos.y, cPos.z);
+                newPositions.push(particlePositions[t.idx], particlePositions[t.idx+1], particlePositions[t.idx+2]);
+            }
+        }
+    }
+    if (newPositions.length === 0) {
+        if (linkLines) { scene.remove(linkLines); linkLines = null; }
+        return;
+    }
+    const floatArray = new Float32Array(newPositions);
+    if (!linkLines) {
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(floatArray, 3));
+        const mat = new THREE.LineBasicMaterial({ 
+            color: 0x00ffcc, 
+            transparent: true, 
+            opacity: intensidad * 0.5,
+            blending: THREE.AdditiveBlending
+        });
+        linkLines = new THREE.LineSegments(geom, mat);
+        scene.add(linkLines);
+    } else {
+        linkLines.geometry.dispose();
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(floatArray, 3));
+        linkLines.geometry = geom;
+        linkLines.material.opacity = intensidad * 0.5;
+    }
+}
+
+// ============================================================
+// 5. CRISTALES INTERACTIVOS Y RAYCASTING
+// ============================================================
+let cristales = [];
+const cristalGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+const raycaster = new THREE.Raycaster();
+const mouseVector = new THREE.Vector2();
+let selectedCrystal = null;
+
+window.addEventListener("mousemove", (e) => {
+    mouseVector.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseVector.y = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+function crearCristal() {
+    const idx = Math.floor(Math.random() * COUNT);
+    const i3 = idx * 3;
+    let pos = new THREE.Vector3();
+    if (modoDimension === 1) pos.set(target1D[i3], 0, 0);
+    else if (modoDimension === 2) pos.set(target2D[i3], target2D[i3+1], 0);
+    else if (modoDimension === 3) pos.set(target3D[i3], target3D[i3+1], target3D[i3+2]);
+    else if (modoDimension === 4) pos.set(target4D[i3], target4D[i3+1], target4D[i3+2]);
+    else pos.set(target5D[i3], target5D[i3+1], target5D[i3+2]);
+    
+    const colores = [0x00ffcc, 0xffffff, 0x00aaff, 0xff8800, 0xcc44ff];
+    const mat = new THREE.MeshBasicMaterial({ color: colores[modoDimension-1], wireframe: true });
+    const mesh = new THREE.Mesh(cristalGeo, mat);
+    mesh.position.copy(pos);
+    mesh.userData.isCrystal = true;
+    scene.add(mesh);
+    cristales.push(mesh);
+    
+    // Sonido
+    if (audioContext) {
+        try {
+            const osc = audioContext.createOscillator();
+            const g = audioContext.createGain();
+            osc.frequency.value = 600 + Math.random() * 400;
+            g.gain.setValueAtTime(0.06, audioContext.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+            osc.connect(g);
+            g.connect(biquadFilter);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.4);
+        } catch(e) {}
+    }
+    guardar(`Cristal generado en [${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}]`);
+}
+
+// ============================================================
+// 6. CAPTURA DE PANTALLA CON INDEXEDDB (PERSISTENCIA)
+// ============================================================
+let db = null;
+const DB_NAME = "KRONOS_CAPTURES";
+const STORE_NAME = "captures";
+
+function abrirDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+            }
+        };
+        request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        request.onerror = (e) => reject(e);
+    });
+}
+
+function guardarCapturaEnDB(dataURL) {
+    return new Promise((resolve, reject) => {
+        if (!db) { abrirDB().then(() => guardarCapturaEnDB(dataURL)).catch(reject); return; }
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        const store = tx.objectStore(STORE_NAME);
+        const entry = {
+            dataURL: dataURL,
+            fecha: new Date().toISOString(),
+            dimension: modoDimension,
+            cuantico: customUniforms.uCuantico.value,
+            glitch: customUniforms.uGlitch.value,
+            tormenta: customUniforms.uTormenta.value
+        };
+        const req = store.add(entry);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function cargarGaleria() {
+    if (!db) { abrirDB().then(cargarGaleria).catch(console.error); return; }
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const store = tx.objectStore(STORE_NAME);
+    const req = store.getAll();
+    req.onsuccess = () => {
+        const grid = document.getElementById("galleryGrid");
+        grid.innerHTML = "";
+        const items = req.result.reverse(); // más reciente primero
+        if (items.length === 0) {
+            grid.innerHTML = "<div style='color:#7da0a0;grid-column:1/-1;text-align:center;'>No hay capturas guardadas.</div>";
+            return;
+        }
+        for (const item of items) {
+            const div = document.createElement("div");
+            div.className = "gallery-item";
+            div.innerHTML = `
+                <img src="${item.dataURL}" alt="Captura">
+                <div class="meta">${new Date(item.fecha).toLocaleString()}<br>DIM: ${item.dimension} | Ψ: ${item.cuantico>0?'SÍ':'NO'}</div>
+            `;
+            grid.appendChild(div);
+        }
+    };
+}
+
+document.getElementById("btn-gallery").addEventListener("click", () => {
+    document.getElementById("galleryOverlay").classList.add("active");
+    cargarGaleria();
+});
+document.getElementById("galleryClose").addEventListener("click", () => {
+    document.getElementById("galleryOverlay").classList.remove("active");
+});
+document.getElementById("galleryOverlay").addEventListener("click", (e) => {
+    if (e.target === e.currentTarget) document.getElementById("galleryOverlay").classList.remove("active");
+});
+
+function capturarFoto() {
+    renderer.render(scene, camera);
+    const dataURL = renderer.domElement.toDataURL("image/png");
+    // Guardar en IndexedDB
+    guardarCapturaEnDB(dataURL).then(() => {
+        guardar("Captura guardada en la galería (IndexedDB).");
+    }).catch(err => {
+        console.warn("Error guardando en DB:", err);
+        // Fallback: descarga directa
+        const a = document.createElement("a");
+        a.download = `KRONOS_v10_${Date.now()}.png`;
+        a.href = dataURL;
+        a.click();
+        guardar("Captura descargada (fallback).");
+    });
+}
+
+// ============================================================
+// 7. TECLADO Y CONTROLES
+// ============================================================
+window.addEventListener("keydown", (e) => {
+    const k = e.key.toLowerCase();
+    if (["1","2","3","4","5"].includes(e.key)) {
+        modoDimension = parseInt(e.key);
+        customUniforms.uDimension.value = modoDimension;
+        const nombres = ["1D FILAMENTO", "2D MATRIZ PLANA", "3D ESFERA GEODÉSICA", "4D GALAXIA KEPLER", "5D AURORA HELIX"];
+        document.getElementById("txt-dimension").textContent = nombres[modoDimension-1];
+        guardar(`Modo ${modoDimension}`);
+    } else if (k === "q") {
+        customUniforms.uCuantico.value = customUniforms.uCuantico.value > 0.5 ? 0 : 1;
+        guardar(`Cuántico: ${customUniforms.uCuantico.value > 0.5}`);
+    } else if (k === "g") {
+        customUniforms.uGlitch.value = customUniforms.uGlitch.value > 0.5 ? 0 : 1;
+        guardar(`Glitch: ${customUniforms.uGlitch.value > 0.5}`);
+    } else if (k === "t") {
+        customUniforms.uTormenta.value = customUniforms.uTormenta.value > 0.5 ? 0 : 1;
+        guardar(`Tormenta: ${customUniforms.uTormenta.value > 0.5}`);
+    } else if (k === "c") {
+        customUniforms.uShockwaveTime.value = 0.0;
+        guardar("Onda de choque!");
+    } else if (k === "r") {
+        controls.target.set(0,0,0);
+        camera.position.set(0, 3, 9);
+        controls.update();
+        guardar("Cámara reiniciada.");
+    } else if (e.key === " ") {
+        e.preventDefault();
+        crearCristal();
+    } else if (k === "p") {
+        capturarFoto();
+    }
+});
+
+// ============================================================
+// 8. POST-PROCESADO (BLOOM)
+// ============================================================
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(new THREE.RenderPass(scene, camera));
+const bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(window.innerWidth, window.innerHeight),
+    parseFloat(bloomSlider.value), 0.4, 0.15
+);
+composer.addPass(bloomPass);
+
+// ============================================================
+// 9. BUCLE PRINCIPAL DE ANIMACIÓN
+// ============================================================
+let lastTime = performance.now(), frameCount = 0;
+const clock = new THREE.Clock();
+
+function animar() {
+    requestAnimationFrame(animar);
+    const delta = clock.getDelta();
+    const time = clock.getElapsedTime();
+    frameCount++;
+    const now = performance.now();
+    if (now >= lastTime + 1000) {
+        document.getElementById("fps").textContent = Math.round((frameCount * 1000) / (now - lastTime));
+        frameCount = 0;
+        lastTime = now;
+    }
+    
+    // Pasar valores a shaders
+    customUniforms.uSpeed.value = parseFloat(speedSlider.value);
+    customUniforms.uSizeMultiplier.value = parseFloat(sizeSlider.value);
+    customUniforms.uTime.value = time;
+    
+    // Audio FFT
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (i < FFT_SIZE) {
+                const h = (dataArray[i] / 255) * 100;
+                fftBars[i].style.height = h + "%";
+            }
+        }
+        nivelAudio = sum / dataArray.length;
+        customUniforms.uAudio.value = nivelAudio;
+        osciladores.forEach(o => {
+            try { o.osc.frequency.setValueAtTime(o.base + (nivelAudio * 0.4), audioContext.currentTime); } catch(e) {}
+        });
+    }
+    
+    // Onda de choque
+    if (customUniforms.uShockwaveTime.value >= 0.0) {
+        customUniforms.uShockwaveTime.value += delta * 0.7;
+        if (customUniforms.uShockwaveTime.value > 1.0) customUniforms.uShockwaveTime.value = -1.0;
+    }
+    
+    // Terreno
+    const posArr = terrain.geometry.attributes.position.array;
+    for (let i = 0; i < posArr.length; i += 3) {
+        const x = posArr[i], z = posArr[i+1];
+        const d = Math.sqrt(x*x + z*z);
+        posArr[i+2] = Math.sin(d * 0.3 - time * 2.0) * (0.2 + (nivelAudio * 0.04));
+    }
+    terrain.geometry.attributes.position.needsUpdate = true;
+    
+    // Raycasting para cristales
+    raycaster.setFromCamera(mouseVector, camera);
+    const intersects = raycaster.intersectObjects(cristales);
+    cristales.forEach(c => {
+        c.material.color.setHex(0x00ffcc);
+        c.scale.set(1,1,1);
+    });
+    if (intersects.length > 0) {
+        const obj = intersects[0].object;
+        obj.material.color.setHex(0xff00ff);
+        obj.scale.set(1.4, 1.4, 1.4);
+        selectedCrystal = obj;
+    } else {
+        selectedCrystal = null;
+    }
+    
+    // Rotación de cristales
+    cristales.forEach(c => {
+        c.rotation.y += 0.02;
+        c.rotation.x += 0.01;
+    });
+    
+    // Actualizar enlaces (Link-Node)
+    if (cristales.length > 0) {
+        const cristalPos = cristales.map(c => c.position);
+        const particlePos = neuralGeometry.attributes.position.array;
+        const intensidad = parseFloat(linkSlider.value);
+        actualizarEnlaces(cristalPos, particlePos, intensidad);
+    }
+    
+    controls.update();
+    composer.render();
+}
+
+// ============================================================
+// 10. REDIMENSIONAMIENTO
+// ============================================================
+window.addEventListener('resize', () => {
+    const w = window.innerWidth, h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
+});
+
+// ============================================================
+// 11. INICIO
+// ============================================================
+abrirDB().then(() => guardar("IndexedDB inicializada.")).catch(console.warn);
+guardar("SISTEMA KRONOS v10.0 NEURAL LINK ENGINE INICIADO.");
+animar();
+
+console.log("%c KRONOS v10.0 · Neural Link Engine ", "background: #00ffcc; color: #000; font-size: 16px; padding: 10px; border-radius: 4px;");
+console.log("%c ✅ Todos los sistemas operativos. Incluye: 5 dimensiones, Bloom, enlaces neuronales, IndexedDB y Raycasting.", "color: #00ffcc; font-size: 12px;");
+</script>
+</body>
+</html>
