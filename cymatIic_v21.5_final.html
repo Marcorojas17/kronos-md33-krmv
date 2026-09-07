@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="folio" content="5204160405358537">
+<meta name="sha" content="a4ff808e">
+<meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>CYMATIC STUDIO v21.5 · Singular Quantum Transcendence Engine</title>
+
+<!-- ===== FUENTES ===== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* ===== VARIABLES ===== */
+    :root {
+        --bg-color: #020308;
+        --accent-cyan: #00ffcc;
+        --accent-purple: #a855f7;
+        --accent-magenta: #ff00cc;
+        --accent-gold: #f0a030;
+        --text-main: #e2e8f0;
+        --text-muted: #64748b;
+        --glass-bg: rgba(2, 3, 8, 0.7);
+        --glass-border: rgba(0, 255, 204, 0.12);
+        --shadow-glow: 0 0 30px rgba(0, 255, 204, 0.05);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        overflow-x: hidden;
+        min-height: 100vh;
+        cursor: none;
+    }
+
+    /* ===== CANVAS DE FONDO (CIMÁTICO) ===== */
+    #canvas-kronos {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+        z-index: 1; pointer-events: auto;
+        cursor: none;
+    }
+    
+    .app-wrapper { 
+        position: relative; z-index: 2; width: 100%; min-height: 100vh;
+        pointer-events: none;
+    }
+    
+    .interactive-element { pointer-events: auto; }
+
+    /* ===== CURSOR PERSONALIZADO ===== */
+    .custom-cursor {
+        position: fixed;
+        width: 20px; height: 20px;
+        border: 2px solid var(--accent-cyan);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 999;
+        transform: translate(-50%, -50%);
+        transition: width 0.2s, height 0.2s, border-color 0.3s;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        backdrop-filter: blur(2px);
+    }
+    .custom-cursor .inner {
+        position: absolute; top: 50%; left: 50%;
+        width: 4px; height: 4px;
+        background: var(--accent-cyan);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 10px rgba(0, 255, 204, 0.8);
+    }
+
+    /* ===== HEADER GLASSMORPHISM ===== */
+    .header {
+        position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+        padding: 18px 40px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid var(--glass-border);
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    .logo {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.5rem; font-weight: 900; text-transform: uppercase;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-magenta), var(--accent-cyan));
+        background-size: 300% 300%;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        animation: gradientShift 8s ease infinite;
+        letter-spacing: -1px;
+    }
+    
+    .logo span { font-weight: 300; opacity: 0.4; color: var(--text-main); -webkit-text-fill-color: initial; }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .nav-links { display: flex; gap: 30px; align-items: center; list-style: none; }
+    .nav-links a {
+        color: var(--text-muted); font-size: 0.85rem; font-weight: 600;
+        transition: color 0.3s ease, text-shadow 0.3s ease;
+        text-decoration: none;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.5px;
+    }
+    .nav-links a:hover { color: var(--accent-cyan); text-shadow: 0 0 15px rgba(0,255,204,0.5); }
+    
+    /* ===== DASHBOARD LAYOUT ===== */
+    .main-container {
+        max-width: 1400px; margin: 110px auto 40px; padding: 0 40px;
+        display: grid; grid-template-columns: 1fr 360px; gap: 30px;
+    }
+
+    /* ===== HERO PANEL ===== */
+    .hero-panel {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 40px;
+        backdrop-filter: blur(16px);
+        display: flex; flex-direction: column; justify-content: space-between;
+        position: relative; overflow: hidden;
+        box-shadow: var(--shadow-glow);
+    }
+    .hero-panel::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+        background: linear-gradient(to bottom, var(--accent-cyan), var(--accent-purple), var(--accent-magenta));
+        animation: pulseLine 4s ease-in-out infinite;
+    }
+    @keyframes pulseLine {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+    
+    .panel-tag {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: var(--accent-cyan);
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 20px;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .panel-tag::before {
+        content: ''; width: 6px; height: 6px;
+        background: var(--accent-cyan);
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 12px var(--accent-cyan);
+        animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot {
+        0%, 100% { opacity: 0.4; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    h1 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 3.8rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -2px;
+        margin-bottom: 16px;
+    }
+    h1 .highlight {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-description {
+        color: var(--text-muted);
+        max-width: 600px;
+        line-height: 1.7;
+        font-size: 1.05rem;
+    }
+    .hero-description .trace-id {
+        color: var(--accent-purple);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+    }
+
+    /* ===== FFT ANALYZER (ESPECTRO DE AUDIO) ===== */
+    .fft-container {
+        display: flex; gap: 3px; align-items: flex-end;
+        width: 100%; height: 60px;
+        background: rgba(1, 2, 6, 0.6);
+        border-radius: 10px;
+        padding: 8px;
+        border: 1px solid rgba(0,255,204,0.08);
+        margin-top: 25px;
+        overflow: hidden;
+    }
+    .fft-bar {
+        flex: 1;
+        height: 0%;
+        background: linear-gradient(to top, var(--accent-cyan), var(--accent-purple));
+        border-radius: 2px;
+        transition: height 0.05s ease;
+        min-height: 2px;
+    }
+
+    /* ===== SISTEMA DE ESTADO ===== */
+    .system-status {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 25px;
+    }
+    .status-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.04);
+        border-radius: 12px;
+        padding: 18px 20px;
+        font-family: 'JetBrains Mono', monospace;
+        transition: border-color 0.3s, transform 0.3s;
+    }
+    .status-card:hover { 
+        border-color: rgba(0,255,204,0.2); 
+        transform: translateY(-2px);
+    }
+    .status-label {
+        font-size: 0.6rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+    .status-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-top: 6px;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .status-value .dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--accent-gold);
+        box-shadow: 0 0 10px var(--accent-gold);
+    }
+    .status-value .dot.online {
+        background: var(--accent-cyan);
+        box-shadow: 0 0 10px var(--accent-cyan);
+        animation: pulseDot 1s infinite;
+    }
+
+    /* ===== PANEL LATERAL DE CONTROL ===== */
+    .sidebar-panel {
+        background: var(--glass-bg); 
+        border: 1px solid var(--glass-border);
+        border-radius: 20px; 
+        padding: 30px; 
+        backdrop-filter: blur(16px);
+        display: flex; flex-direction: column; gap: 28px;
+        box-shadow: var(--shadow-glow);
+    }
+    .sidebar-panel h3 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.3rem; font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .control-group {
+        display: flex; flex-direction: column; gap: 10px;
+    }
+    .control-group label {
+        font-size: 0.7rem; color: var(--text-muted);
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase; letter-spacing: 1px;
+        display: flex; justify-content: space-between;
+    }
+    .control-group label span { color: var(--accent-cyan); }
+
+    /* Sliders personalizados */
+    .range-input {
+        width: 100%; -webkit-appearance: none; appearance: none;
+        background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;
+        outline: none; transition: background 0.3s;
+    }
+    .range-input::-webkit-slider-thumb {
+        -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+        border-radius: 50%; background: var(--accent-cyan); cursor: pointer;
+        box-shadow: 0 0 10px var(--accent-cyan); transition: transform 0.1s;
+    }
+    .range-input::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    .btn-action {
+        width: 100%; padding: 16px; border-radius: 10px; border: none;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-magenta));
+        background-size: 200% auto; color: #020308; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.8rem;
+        cursor: pointer; transition: all 0.4s ease;
+        box-shadow: 0 4px 15px rgba(0, 255, 204, 0.2);
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    .btn-action:hover {
+        background-position: right center;
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(255, 0, 204, 0.4);
+    }
+    .btn-action.secondary {
+        background: transparent;
+        border: 1px solid var(--glass-border);
+        color: var(--text-main);
+        background-size: auto;
+    }
+    .btn-action.secondary:hover {
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 25px rgba(0,255,204,0.1);
+        background: rgba(0,255,204,0.03);
+    }
+
+    .btn-group {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+
+    /* ===== DRAG & DROP ZONE ===== */
+    #drop-zone {
+        position: fixed;
+        inset: 0;
+        z-index: 99;
+        background: rgba(0, 255, 204, 0.05);
+        backdrop-filter: blur(8px);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        border: 4px dashed var(--accent-cyan);
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+    }
+    #drop-zone.active {
+        display: flex;
+        pointer-events: auto;
+    }
+    .drop-message {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--accent-cyan);
+        font-family: 'Space Grotesk', sans-serif;
+        text-shadow: 0 0 30px rgba(0, 255, 204, 0.5);
+        text-align: center;
+    }
+    .drop-message small {
+        display: block;
+        font-size: 1rem;
+        font-weight: 400;
+        opacity: 0.6;
+        margin-top: 8px;
+    }
+
+    /* ===== RESPONSIVIDAD ===== */
+    @media (max-width: 1024px) {
+        .main-container { grid-template-columns: 1fr; margin-top: 100px; padding: 0 20px; }
+        h1 { font-size: 2.8rem; }
+        body { cursor: auto; }
+        .custom-cursor { display: none; }
+        .btn-group { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+        .header { padding: 14px 20px; flex-wrap: wrap; gap: 10px; }
+        .nav-links { gap: 16px; }
+        .nav-links a { font-size: 0.7rem; }
+        h1 { font-size: 2rem; }
+        .hero-panel { padding: 24px; }
+        .system-status { grid-template-columns: 1fr; }
+        .drop-message { font-size: 1.2rem; }
+    }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--accent-cyan); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- ===== CURSOR PERSONALIZADO ===== -->
+<div class="custom-cursor" id="customCursor">
+    <div class="inner"></div>
+</div>
+
+<!-- ===== DROP ZONE ===== -->
+<div id="drop-zone">
+    <div class="drop-message">
+        🎵 SUELTA TU ARCHIVO DE AUDIO AQUÍ
+        <small>MP3, WAV, OGG · El motor lo decodificará al instante</small>
+    </div>
+</div>
+
+<!-- ===== CANVAS DE FONDO ===== -->
+<canvas id="canvas-kronos"></canvas>
+
+<!-- ===== APP WRAPPER ===== -->
+<div class="app-wrapper">
+
+    <!-- HEADER -->
+    <header class="header interactive-element">
+        <div class="logo">CYMATIC<span>STUDIO v21.5</span></div>
+        <ul class="nav-links">
+            <li><a href="#core">Quantum Core</a></li>
+            <li><a href="#matrix">Matrix</a></li>
+            <li><a href="#trace">Trace Logs</a></li>
+        </ul>
+        <div style="display:flex; gap:12px; align-items:center;">
+            <span id="engine-status" style="font-family:'JetBrains Mono';font-size:0.7rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+                <span id="status-dot" class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--accent-gold);display:inline-block;"></span>
+                <span id="status-txt">STANDBY</span>
+            </span>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD -->
+    <main class="main-container">
+        
+        <!-- HERO PANEL -->
+        <section class="hero-panel interactive-element" id="core">
+            <div>
+                <div class="panel-tag">Singular Quantum Transcendence Engine</div>
+                <h1>Manipulación de <br><span class="highlight">Frecuencias No Lineales</span></h1>
+                <p class="hero-description">
+                    Monitoreo en tiempo real del nodo de traza 
+                    <span class="trace-id">KRONOS-MT01JAAF</span>. 
+                    Modula los armónicos vectoriales moviendo tu cursor 
+                    sobre la interfaz cuántica de fondo.
+                </p>
+                
+                <!-- FFT ANALYZER (ESPECTRO DE AUDIO) -->
+                <div class="fft-container" id="fft-render-box"></div>
+            </div>
+            
+            <div class="system-status">
+                <div class="status-card">
+                    <div class="status-label">SHA Signature</div>
+                    <div class="status-value"><span class="dot" style="background:var(--accent-cyan);box-shadow:0 0 10px var(--accent-cyan);"></span> a4ff808e</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">Folio Index</div>
+                    <div class="status-value"><span class="dot" style="background:var(--accent-gold);box-shadow:0 0 10px var(--accent-gold);"></span> 520416040535</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-label">Core Engine</div>
+                    <div class="status-value"><span class="dot online" id="status-dot-core"></span> <span id="fps-counter">ACTIVE</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar-panel interactive-element" id="matrix">
+            <h3>🎛️ Panel de Modulación</h3>
+            
+            <div class="control-group">
+                <label>Frecuencia Base <span id="val-freq">50 Hz</span></label>
+                <input type="range" id="slider-freq" class="range-input" min="1" max="100" value="50">
+            </div>
+            
+            <div class="control-group">
+                <label>Amplitud de Resonancia <span id="val-amp">100</span></label>
+                <input type="range" id="slider-amp" class="range-input" min="1" max="200" value="100">
+            </div>
+
+            <div class="control-group">
+                <label>Complejidad de Ondas <span id="val-lines">45</span></label>
+                <input type="range" id="slider-lines" class="range-input" min="10" max="80" value="45">
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-action" id="btn-sync">🎵 Iniciar Motor Audio</button>
+                <button class="btn-action secondary" id="btn-reset">⟳ Reset</button>
+            </div>
+            
+            <div style="border-top:1px solid var(--glass-border);padding-top:16px;font-size:0.7rem;color:var(--text-muted);text-align:center;font-family:'JetBrains Mono',monospace;">
+                💡 Arrastra un archivo MP3/WAV a la pantalla
+            </div>
+        </aside>
+    </main>
+
+</div>
+
+<!-- ========================================================== -->
+<!-- ===== JAVASCRIPT: MOTOR COMPLETO ===== -->
+<!-- ========================================================== -->
+<script>
+    // ============================================================
+    // 1. GESTIÓN DEL CURSOR PERSONALIZADO
+    // ============================================================
+    const cursor = document.getElementById('customCursor');
+    let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;
+    let ballX = mouseX, ballY = mouseY;
+    const speed = 0.15;
+
+    window.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    document.querySelectorAll('.interactive-element, a, input, button').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            cursor.style.width = '40px';
+            cursor.style.height = '40px';
+            cursor.style.borderColor = 'var(--accent-magenta)';
+        });
+        el.addEventListener('mouseleave', () => {
+            cursor.style.width = '20px';
+            cursor.style.height = '20px';
+            cursor.style.borderColor = 'var(--accent-cyan)';
+        });
+    });
+
+    // ============================================================
+    // 2. CONSTRUCCIÓN DEL FFT (32 BARRAS)
+    // ============================================================
+    const fftContainer = document.getElementById('fft-render-box');
+    const totalBars = 32;
+    const barElements = [];
+    for (let i = 0; i < totalBars; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'fft-bar';
+        fftContainer.appendChild(bar);
+        barElements.push(bar);
+    }
+
+    // ============================================================
+    // 3. MOTOR GRÁFICO DE INTERFERENCIA CIMÁTICA
+    // ============================================================
+    const canvas = document.getElementById('canvas-kronos');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    const sliderFreq = document.getElementById('slider-freq');
+    const sliderAmp = document.getElementById('slider-amp');
+    const sliderLines = document.getElementById('slider-lines');
+    const valFreq = document.getElementById('val-freq');
+    const valAmp = document.getElementById('val-amp');
+    const valLines = document.getElementById('val-lines');
+
+    let lineCount = parseInt(sliderLines.value);
+    let baseFrequencyModifier = parseFloat(sliderFreq.value) / 10000;
+    let baseAmplitude = parseFloat(sliderAmp.value);
+
+    sliderFreq.addEventListener('input', (e) => {
+        valFreq.innerText = e.target.value + ' Hz';
+        baseFrequencyModifier = parseFloat(e.target.value) / 10000;
+        updateAudioFreq(parseFloat(e.target.value));
+    });
+
+    sliderAmp.addEventListener('input', (e) => {
+        valAmp.innerText = e.target.value;
+        baseAmplitude = parseFloat(e.target.value);
+    });
+
+    sliderLines.addEventListener('input', (e) => {
+        valLines.innerText = e.target.value;
+        lineCount = parseInt(e.target.value);
+    });
+
+    // ============================================================
+    // 4. AUDIO DE SÍNTESIS ADITIVA & PROCESAMIENTO FFT
+    // ============================================================
+    let audioCtx = null;
+    let mainOscillator = null;
+    let subOscillator = null;
+    let mainGain = null;
+    let analyzer = null;
+    let dataArray = [];
+    let audioSourceNode = null;
+
+    const engineStatusTxt = document.getElementById('status-txt');
+    const engineStatusDot = document.getElementById('status-dot');
+    const statusDotCore = document.getElementById('status-dot-core');
+
+    function initAudio() {
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Configuración de nodo analizador FFT de hardware
+        analyzer = audioCtx.createAnalyser();
+        analyzer.fftSize = 64; // Genera 32 bins de frecuencias
+        const bufferLength = analyzer.frequencyBinCount;
+        dataArray = new Uint8Array(bufferLength);
+        
+        mainGain = audioCtx.createGain();
+        mainGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        
+        mainOscillator = audioCtx.createOscillator();
+        mainOscillator.type = 'sine';
+        mainOscillator.frequency.setValueAtTime(parseFloat(sliderFreq.value) * 2, audioCtx.currentTime);
+        
+        subOscillator = audioCtx.createOscillator();
+        subOscillator.type = 'triangle';
+        subOscillator.frequency.setValueAtTime(parseFloat(sliderFreq.value), audioCtx.currentTime);
+        
+        // Enrutamiento de hilos de audio con el analizador intermedio
+        mainOscillator.connect(mainGain);
+        subOscillator.connect(mainGain);
+        mainGain.connect(analyzer);
+        analyzer.connect(audioCtx.destination);
+        
+        mainOscillator.start();
+        subOscillator.start();
+        
+        engineStatusTxt.innerText = 'ONLINE';
+        engineStatusTxt.style.color = 'var(--accent-cyan)';
+        engineStatusDot.className = 'dot online';
+        statusDotCore.className = 'dot online';
+        document.getElementById('btn-sync').innerText = '🔊 Sincronía Activa';
+        document.getElementById('btn-sync').style.background = 'linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta))';
+    }
+
+    function updateAudioFreq(frequency) {
+        if (!audioCtx) return;
+        if (mainOscillator) {
+            mainOscillator.frequency.setTargetAtTime(frequency * 2, audioCtx.currentTime, 0.1);
+        }
+        if (subOscillator) {
+            subOscillator.frequency.setTargetAtTime(frequency, audioCtx.currentTime, 0.1);
+        }
+    }
+
+    function modulateAudioWithMouse(xFactor, yFactor) {
+        if (!audioCtx || !mainOscillator || !mainGain) return;
+        let targetFreq = (parseFloat(sliderFreq.value) * 2) + (xFactor * 120);
+        mainOscillator.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);
+        let targetGain = 0.02 + (yFactor * 0.07);
+        mainGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.1);
+    }
+
+    document.getElementById('btn-sync').addEventListener('click', initAudio);
+    
+    // Click en cualquier parte para iniciar audio
+    window.addEventListener('click', () => { if (!audioCtx) initAudio(); });
+
+    // ============================================================
+    // 5. DRAG & DROP PARA ARCHIVOS DE AUDIO
+    // ============================================================
+    const dropZone = document.getElementById('drop-zone');
+
+    window.addEventListener('dragenter', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('active');
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        if (e.clientX === 0 && e.clientY === 0) {
+            dropZone.classList.remove('active');
+        }
+    });
+
+    dropZone.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('active');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('audio/')) {
+            const file = files[0];
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const arrayBuffer = event.target.result;
+                    initAudio();
+                    
+                    // Decodificar el archivo de audio
+                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+                    
+                    // Detener sintetizador si está activo
+                    if (mainOscillator) {
+                        mainOscillator.stop();
+                        subOscillator.stop();
+                    }
+                    
+                    // Crear fuente de audio desde el buffer
+                    audioSourceNode = audioCtx.createBufferSource();
+                    audioSourceNode.buffer = audioBuffer;
+                    
+                    // Conectar al analizador
+                    audioSourceNode.connect(analyzer);
+                    analyzer.connect(audioCtx.destination);
+                    audioSourceNode.start(0);
+                    
+                    engineStatusTxt.innerText = 'PLAYING: ' + file.name;
+                    engineStatusTxt.style.color = 'var(--accent-magenta)';
+                    document.getElementById('btn-sync').innerText = '🎵 Reproduciendo';
+                    
+                    console.log('✅ Archivo cargado:', file.name);
+                } catch (err) {
+                    console.error('Error al decodificar audio:', err);
+                    engineStatusTxt.innerText = 'ERROR: ' + err.message;
+                    engineStatusTxt.style.color = '#ff4d6d';
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    });
+
+    // ============================================================
+    // 6. RESET
+    // ============================================================
+    document.getElementById('btn-reset').addEventListener('click', () => {
+        sliderFreq.value = 50;
+        sliderAmp.value = 100;
+        sliderLines.value = 45;
+        valFreq.innerText = '50 Hz';
+        valAmp.innerText = '100';
+        valLines.innerText = '45';
+        baseFrequencyModifier = 0.005;
+        baseAmplitude = 100;
+        lineCount = 45;
+        
+        if (audioCtx) {
+            try {
+                // Detener fuente de audio si está activa
+                if (audioSourceNode) {
+                    audioSourceNode.stop();
+                    audioSourceNode = null;
+                }
+                if (mainOscillator) {
+                    mainOscillator.stop();
+                    subOscillator.stop();
+                }
+                // Reiniciar contexto
+                audioCtx.close();
+                audioCtx = null;
+                mainOscillator = null;
+                subOscillator = null;
+                mainGain = null;
+                analyzer = null;
+            } catch(e) {}
+        }
+        
+        engineStatusTxt.innerText = 'STANDBY';
+        engineStatusTxt.style.color = 'var(--text-muted)';
+        engineStatusDot.className = 'dot';
+        statusDotCore.className = 'dot';
+        document.getElementById('btn-sync').innerText = '🎵 Iniciar Motor Audio';
+        document.getElementById('btn-sync').style.background = 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-magenta))';
+        
+        // Resetear barras FFT
+        barElements.forEach(bar => bar.style.height = '0%');
+    });
+
+    // ============================================================
+    // 7. LOOP DE RENDERIZADO GENERAL
+    // ============================================================
+    let phaseOffset = 0;
+
+    function render() {
+        // Efecto barrido (motion blur)
+        ctx.fillStyle = 'rgba(2, 3, 8, 0.08)';
+        ctx.fillRect(0, 0, width, height);
+
+        // Interpolación del cursor
+        ballX += (mouseX - ballX) * speed;
+        ballY += (mouseY - ballY) * speed;
+        cursor.style.left = ballX + 'px';
+        cursor.style.top = ballY + 'px';
+
+        phaseOffset += 0.004;
+
+        // Modulación del audio por mouse
+        modulateAudioWithMouse(ballX / width, 1 - (ballY / height));
+
+        // Actualizar FFT
+        if (analyzer && dataArray.length > 0) {
+            analyzer.getByteFrequencyData(dataArray);
+            for (let i = 0; i < totalBars; i++) {
+                let normalizedHeight = (dataArray[i] / 255) * 100;
+                barElements[i].style.height = Math.max(4, normalizedHeight) + '%';
+            }
+        }
+
+        // Renderizado del entramado cimático
+        for (let i = 0; i < lineCount; i++) {
+            let currentLineY = (height / lineCount) * i;
+            let wavePhase = phaseOffset + (i * 0.15);
+            
+            ctx.beginPath();
+            ctx.lineWidth = (i % 4 === 0) ? 1.4 : 0.5;
+            
+            let dynamicGradient = ctx.createLinearGradient(0, 0, width, 0);
+            dynamicGradient.addColorStop(0, 'rgba(168, 85, 247, 0.15)');
+            dynamicGradient.addColorStop(ballX / width, 'rgba(0, 255, 204, 0.6)');
+            dynamicGradient.addColorStop(1, 'rgba(255, 0, 204, 0.15)');
+            ctx.strokeStyle = dynamicGradient;
+            
+            for (let x = 0; x < width; x += 15) {
+                let distanceToMouse = Math.abs(x - ballX);
+                let influenceArea = Math.max(0, (350 - distanceToMouse) / 350);
+                let y = currentLineY + Math.sin(x * baseFrequencyModifier + wavePhase) * (baseAmplitude * 0.4);
+                y += Math.sin(x * 0.015 + wavePhase * 1.8) * (60 * influenceArea) * (1 - Math.abs(ballY - currentLineY)/height);
+                if (x === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.stroke();
+        }
+
+        requestAnimationFrame(render);
+    }
+
+    // ============================================================
+    // 8. INICIO
+    // ============================================================
+    console.log('✅ CYMATIC STUDIO v21.5 - SINGULAR ENGINE cargado.');
+    console.log('🎵 Mueve el cursor para modular el sintetizador y las ondas.');
+    console.log('🎛️ Ajusta los sliders para cambiar la frecuencia, amplitud y complejidad.');
+    console.log('💡 Arrastra un archivo MP3/WAV a la pantalla para reproducirlo.');
+
+    render();
+</script>
+</body>
+</html>
