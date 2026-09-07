@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="folio" content="5204160405358537">
+<meta name="sha" content="a4ff808e">
+<meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>KRONOS MATRIX v8.0 · Commercial Edition</title>
+<style>
+    /* ===== RESET Y HUD ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body, html { 
+        margin: 0; padding: 0; overflow: hidden; 
+        background: #000103; 
+        font-family: 'SF Mono', 'Courier New', monospace; color: #00ffcc; 
+    }
+    canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+    
+    /* HUD izquierdo */
+    .hud {
+        position: absolute; z-index: 10; 
+        background: rgba(2, 5, 8, 0.92);
+        padding: 20px; border: 1px solid rgba(0, 255, 204, 0.25); border-radius: 12px;
+        backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+        box-shadow: 0 25px 60px rgba(0,0,0,0.95), inset 0 0 20px rgba(0,255,204,0.05);
+        user-select: none; pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .hud * { pointer-events: auto; }
+    .hud:hover { border-color: rgba(0, 255, 204, 0.8); box-shadow: 0 0 40px rgba(0, 255, 204, 0.25); }
+    #hud-izq { top: 20px; left: 20px; width: 360px; }
+    #hud-der { top: 20px; right: 20px; width: 360px; max-height: 520px; overflow-y: auto; scrollbar-width: none; }
+    #hud-der::-webkit-scrollbar { display: none; }
+    
+    .titulo {
+        color: #00ffcc; text-shadow: 0 0 12px rgba(0,255,204,0.6);
+        letter-spacing: 3px; font-weight: bold; margin-bottom: 12px; text-align: center;
+        font-size: 1.2rem;
+    }
+    .resaltado { color: #fff; font-weight: bold; text-shadow: 0 0 8px #00ffcc; }
+    .log {
+        border-left: 3px solid #00ffcc; padding: 6px 12px; margin: 6px 0;
+        color: #bbf7ec; font-size: 10px; background: rgba(0,255,204,0.02);
+        animation: scanline 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes scanline { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+    
+    .btn {
+        background: linear-gradient(135deg, #00ffcc, #00aaff); color: #000;
+        border: none; padding: 12px; width: 100%; font-weight: bold; font-family: inherit;
+        cursor: pointer; margin-top: 10px; border-radius: 6px; letter-spacing: 1px;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn:hover { background: #fff; box-shadow: 0 0 25px rgba(0,255,204,0.6); transform: translateY(-1px); }
+    .btn:active { transform: translateY(1px); }
+    
+    .shortcuts {
+        font-size: 10px; color: #7da0a0; margin: 12px 0; padding: 10px;
+        background: rgba(0,0,0,0.6); border-radius: 6px; border: 1px solid rgba(255,255,255,0.03);
+    }
+    .shortcuts strong { color: #00ffcc; }
+    
+    .fft-container {
+        display: flex; gap: 2px; align-items: flex-end; width: 100%; height: 30px;
+        background: rgba(0,0,0,0.5); border-radius: 6px; padding: 3px;
+        margin-top: 8px; border: 1px solid rgba(0,255,204,0.15); overflow: hidden;
+    }
+    .fft-bar {
+        flex: 1; height: 0%; background: linear-gradient(to top, #00ffcc, #ff00ff);
+        border-radius: 1px; transition: height 0.05s ease;
+    }
+    
+    /* Panel de control deslizante */
+    .control-group {
+        display: flex; flex-direction: column; gap: 8px; margin-top: 12px;
+        background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px;
+        border: 1px solid rgba(0,255,204,0.1);
+    }
+    .control-row {
+        display: flex; align-items: center; justify-content: space-between;
+        font-size: 10px; color: #7da0a0;
+    }
+    .control-row input[type="range"] {
+        width: 60%; background: transparent; accent-color: #00ffcc;
+        cursor: pointer;
+    }
+    .control-row span { min-width: 30px; text-align: right; color: #fff; }
+    
+    /* Marca de agua para versión comercial */
+    .watermark {
+        position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+        z-index: 5; color: rgba(0,255,204,0.15); font-size: 9px;
+        letter-spacing: 4px; pointer-events: none;
+        text-transform: uppercase;
+    }
+    
+    @media (max-width: 750px) {
+        #hud-izq, #hud-der { width: 280px; padding: 12px; font-size: 9px; }
+        #hud-der { max-height: 300px; }
+        .titulo { font-size: 1rem; }
+    }
+</style>
+
+<!-- ===== CARGA DE THREE.JS Y ADDONS DESDE CDN ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+</head>
+<body>
+
+<!-- ===== HUD IZQUIERDO ===== -->
+<div class="hud" id="hud-izq">
+    <div class="titulo">◢ KRONOS · v8.0 ◣</div>
+    <div>[NUCLEO]: <span class="resaltado">MT01JAAF a4ff808e</span></div>
+    <div>[MODO]: <span id="txt-dimension" class="resaltado" style="color:#00ffcc">1D FILAMENTO</span></div>
+    <div>[FPS]: <span id="fps" class="resaltado">60</span> | [AUDIO]: <span id="txt-audio">SILENCIOSO</span></div>
+    
+    <!-- Espectrómetro FFT -->
+    <div class="fft-container" id="fftMeter"></div>
+    
+    <!-- Panel de control deslizante -->
+    <div class="control-group">
+        <div class="control-row">
+            <span>Velocidad</span>
+            <input type="range" id="speedSlider" min="0" max="2" step="0.05" value="1">
+            <span id="speedVal">1.00</span>
+        </div>
+        <div class="control-row">
+            <span>Tamaño part.</span>
+            <input type="range" id="sizeSlider" min="0.5" max="3" step="0.1" value="1.2">
+            <span id="sizeVal">1.2</span>
+        </div>
+        <div class="control-row">
+            <span>Intensidad Bloom</span>
+            <input type="range" id="bloomSlider" min="0" max="1.5" step="0.01" value="0.6">
+            <span id="bloomVal">0.60</span>
+        </div>
+    </div>
+    
+    <div style="margin:8px 0; border-top:1px dashed rgba(0,255,204,0.3)"></div>
+    <div class="shortcuts">
+        <strong>[CONTROLES]</strong><br>
+        • 1 / 2 / 3 / 4 / 5 : Modos (1D,2D,3D,Galaxia,Aurora)<br>
+        • Q : Fluctuación Cuántica<br>
+        • G : Glitch<br>
+        • T : Tormenta<br>
+        • C : Onda de choque<br>
+        • ESPACIO : Cristal<br>
+        • P : Captura PNG<br>
+        • R : Reset cámara<br>
+        • Mouse arrastrar : Rotar cámara
+    </div>
+    <button class="btn" id="btn-micro">▶ MICRÓFONO</button>
+    <button class="btn" id="btn-synth" style="background: linear-gradient(135deg, #ff00ff, #00aaff); color: #fff;">♪ SINTETIZADOR</button>
+    <div style="font-size:8px; margin-top:12px; opacity:.4; text-align: center; letter-spacing: 0.5px;">
+        TRACE: KRONOS-TRACE-PVA-5204160405358537-MT01JAAF<br>
+        COMMERCIAL EDITION v8.0
+    </div>
+</div>
+
+<!-- ===== HUD DERECHO (LOGS) ===== -->
+<div class="hud" id="hud-der">
+    <div class="titulo">LEGADO DE EVENTOS</div>
+    <div id="historial"></div>
+</div>
+
+<!-- ===== MARCA DE AGUA ===== -->
+<div class="watermark">KRONOS · COMMERCIAL EDITION</div>
+
+<!-- ===== CANVAS PARA THREE.JS ===== -->
+<canvas id="canvas-kronos"></canvas>
+
+<script>
+// ============================================================
+// 1. CONFIGURACIÓN GLOBAL Y AUDIO
+// ============================================================
+let modoDimension = 1, modoCuantico = 0, glitchActivo = 0, tormentaActiva = 0;
+let audioContext, analyser, dataArray, nivelAudio = 0, synthActivo = false, osciladores = [];
+let biquadFilter;
+const SHA = "a4ff808e";
+
+// Crear barras FFT
+const FFT_SIZE = 32;
+const fftContainer = document.getElementById("fftMeter");
+for(let i=0; i<FFT_SIZE; i++) {
+    let bar = document.createElement("div");
+    bar.className = "fft-bar";
+    fftContainer.appendChild(bar);
+}
+const fftBars = document.querySelectorAll(".fft-bar");
+
+// Funciones de historial
+function guardar(info) {
+    try {
+        let logs = JSON.parse(localStorage.getItem("kronos_legado_v8") || "[]");
+        logs.unshift("[" + new Date().toLocaleTimeString() + "] " + info);
+        if (logs.length > 15) logs.pop();
+        localStorage.setItem("kronos_legado_v8", JSON.stringify(logs));
+        renderHistorial();
+    } catch(e) { console.warn(e); }
+}
+function renderHistorial() {
+    let logs = [];
+    try { logs = JSON.parse(localStorage.getItem("kronos_legado_v8") || "[]"); } catch(e) {}
+    if(logs.length === 0) logs = ["[00:00:00] SISTEMA LISTO"];
+    document.getElementById("historial").innerHTML = logs.map(x => `<div class="log">${x}</div>`).join("");
+}
+renderHistorial();
+
+// ===== AUDIO =====
+document.getElementById("btn-micro").addEventListener("click", async () => {
+    try {
+        let stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        initAudio();
+        let src = audioContext.createMediaStreamSource(stream);
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = FFT_SIZE * 2;
+        src.connect(biquadFilter);
+        biquadFilter.connect(analyser);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        document.getElementById("btn-micro").innerText = "● MICRO ACOPLADO";
+        document.getElementById("txt-audio").innerText = "MODULANDO";
+        document.getElementById("btn-micro").style.background = "#fff";
+        document.getElementById("btn-micro").style.color = "#000";
+        guardar("Micrófono conectado.");
+    } catch (e) {
+        alert("Permiso de micrófono denegado.");
+    }
+});
+
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        biquadFilter = audioContext.createBiquadFilter();
+        biquadFilter.type = "lowpass";
+        biquadFilter.frequency.setValueAtTime(1200, audioContext.currentTime);
+        biquadFilter.Q.setValueAtTime(2.0, audioContext.currentTime);
+        // Conectar a destino para que suene el sintetizador
+        biquadFilter.connect(audioContext.destination);
+    }
+}
+
+document.getElementById("btn-synth").addEventListener("click", () => {
+    initAudio();
+    synthActivo = !synthActivo;
+    if (synthActivo) {
+        document.getElementById("btn-synth").innerText = "■ APAGAR SINTETIZADOR";
+        for (let i = 0; i < 4; i++) {
+            let osc = audioContext.createOscillator();
+            let gain = audioContext.createGain();
+            osc.type = i % 2 === 0 ? "sine" : "sawtooth";
+            osc.frequency.value = 55 * (i + 1);
+            gain.gain.value = 0.015;
+            osc.connect(gain);
+            gain.connect(biquadFilter);
+            osc.start();
+            osciladores.push({ osc, gain, base: 55 * (i + 1) });
+        }
+        guardar("Sintetizador activo.");
+    } else {
+        document.getElementById("btn-synth").innerText = "♪ SINTETIZADOR";
+        osciladores.forEach(o => o.osc.stop());
+        osciladores = [];
+        guardar("Sintetizador apagado.");
+    }
+});
+
+// ============================================================
+// 2. MOTOR THREE.JS CON POST-PROCESADO (BLOOM)
+// ============================================================
+let scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x000103, 0.025);
+
+let camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("canvas-kronos"), antialias: true, preserveDrawingBuffer: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ReinhardToneMapping;
+renderer.toneMappingExposure = 1.2;
+
+// ===== POST-PROCESADO: BLOOM =====
+const renderScene = new THREE.RenderPass(scene, camera);
+const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.6, 0.4, 0.85);
+bloomPass.threshold = 0.1;
+bloomPass.strength = 0.6;
+bloomPass.radius = 0.4;
+
+const composer = new THREE.EffectComposer(renderer);
+composer.addPass(renderScene);
+composer.addPass(bloomPass);
+
+// ===== ORBIT CONTROLS (arrastrar para rotar) =====
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = false;
+controls.target.set(0, 0, 0);
+controls.maxDistance = 20;
+controls.minDistance = 3;
+
+let targetCameraPos = new THREE.Vector3(0, 2, 8);
+camera.position.copy(targetCameraPos);
+controls.update();
+
+let mouseX = 0, mouseY = 0;
+window.addEventListener("mousemove", e => {
+    mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+    mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+
+// ============================================================
+// 3. SHADERS PERSONALIZADOS (GPU NEURAL)
+// ============================================================
+let customUniforms = {
+    uTime: { value: 0.0 },
+    uAudio: { value: 0.0 },
+    uDimension: { value: 1.0 },
+    uCuantico: { value: 0.0 },
+    uGlitch: { value: 0.0 },
+    uTormenta: { value: 0.0 },
+    uShockwaveTime: { value: -1.0 },
+    uSpeed: { value: 1.0 },
+    uSize: { value: 1.2 }
+};
+
+const vertexShader = `
+    uniform float uTime;
+    uniform float uAudio;
+    uniform float uDimension;
+    uniform float uCuantico;
+    uniform float uGlitch;
+    uniform float uTormenta;
+    uniform float uShockwaveTime;
+    uniform float uSpeed;
+    uniform float uSize;
+    
+    attribute vec3 aTarget1D;
+    attribute vec3 aTarget2D;
+    attribute vec3 aTarget3D;
+    attribute vec3 aTargetGalaxia;
+    attribute vec3 aTargetAurora;
+    attribute float aRandomPhase;
+    
+    varying vec3 vColor;
+    
+    float hash(float n) { return fract(sin(n) * 43758.5453123); }
+    
+    void main() {
+        vec3 computedPosition = aTarget1D;
+        if (uDimension == 2.0) computedPosition = aTarget2D;
+        else if (uDimension == 3.0) computedPosition = aTarget3D;
+        else if (uDimension == 4.0) computedPosition = aTargetGalaxia;
+        else if (uDimension == 5.0) computedPosition = aTargetAurora;
+        
+        // Fluctuación cuántica
+        if (uCuantico > 0.5) {
+            computedPosition.x += sin(uTime * uSpeed + aRandomPhase) * 1.5;
+            computedPosition.y += cos(uTime * uSpeed - aRandomPhase) * 1.5;
+            computedPosition.z += sin(uTime * 0.5 * uSpeed + aRandomPhase) * 1.5;
+        }
+        
+        // Tormenta
+        if (uTormenta > 0.5) {
+            float angle = uTime * 2.0 * uSpeed + aRandomPhase;
+            float radius = length(computedPosition.xz) + sin(uTime * uSpeed + aRandomPhase) * 0.5;
+            computedPosition.x = cos(angle) * radius;
+            computedPosition.z = sin(angle) * radius;
+            computedPosition.y += sin(uTime * 3.0 * uSpeed + aRandomPhase) * 1.0;
+        }
+        
+        // Onda de choque
+        if (uShockwaveTime >= 0.0) {
+            float dist = length(computedPosition);
+            float waveRadius = uShockwaveTime * 15.0;
+            float waveWidth = 1.2;
+            if (dist > waveRadius - waveWidth && dist < waveRadius + waveWidth) {
+                float strength = 1.0 - (dist / 15.0);
+                computedPosition += normalize(computedPosition) * strength * 2.5;
+            }
+        }
+        
+        // Glitch
+        if (uGlitch > 0.5 && hash(floor(uTime * 25.0 * uSpeed) + aRandomPhase) > 0.88) {
+            computedPosition.x += (hash(aRandomPhase) - 0.5) * 2.0;
+            computedPosition.y += (hash(aRandomPhase + 1.0) - 0.5) * 2.0;
+        }
+        
+        // Modulación por audio
+        computedPosition.y += sin(uTime * 8.0 * uSpeed + aRandomPhase) * (uAudio * 0.015);
+        
+        // Color según modo
+        if (uDimension == 1.0) vColor = vec3(0.0, 1.0, 0.8);
+        else if (uDimension == 2.0) vColor = vec3(1.0, 1.0, 1.0);
+        else if (uDimension == 3.0) vColor = vec3(0.0, 0.66, 1.0);
+        else if (uDimension == 4.0) vColor = vec3(1.0, 0.5, 0.0);
+        else if (uDimension == 5.0) vColor = vec3(0.8, 0.2, 1.0);
+        if (uCuantico > 0.5) vColor = vec3(1.0, 0.0, 1.0);
+        
+        vec4 mvPosition = modelViewMatrix * vec4(computedPosition, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        gl_PointSize = (1.8 + (uAudio * 0.04)) * uSize * (300.0 / -mvPosition.z);
+    }
+`;
+
+const fragmentShader = `
+    varying vec3 vColor;
+    void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+        float alpha = smoothstep(0.5, 0.1, dist) * 0.85;
+        gl_FragColor = vec4(vColor, alpha);
+    }
+`;
+
+// ============================================================
+// 4. GENERACIÓN DE DATOS PARA 15,000 PARTÍCULAS
+// ============================================================
+const COUNT = 15000;
+let neuralGeometry = new THREE.BufferGeometry();
+let positions = new Float32Array(COUNT * 3);
+let target1D = new Float32Array(COUNT * 3);
+let target2D = new Float32Array(COUNT * 3);
+let target3D = new Float32Array(COUNT * 3);
+let targetGalaxia = new Float32Array(COUNT * 3);
+let targetAurora = new Float32Array(COUNT * 3);
+let randomPhase = new Float32Array(COUNT);
+
+for(let i=0; i<COUNT; i++) {
+    const i3 = i * 3;
+    // 1D
+    target1D[i3] = (Math.random() - 0.5) * 14;
+    target1D[i3+1] = 0;
+    target1D[i3+2] = 0;
+    // 2D
+    target2D[i3] = (Math.random() - 0.5) * 10;
+    target2D[i3+1] = (Math.random() - 0.5) * 10;
+    target2D[i3+2] = 0;
+    // 3D (esfera)
+    let u = Math.random(), v = Math.random();
+    let theta = u * 2.0 * Math.PI;
+    let phi = Math.acos(2.0 * v - 1.0);
+    let r = 2.5 + Math.random() * 2.0;
+    target3D[i3] = r * Math.sin(phi) * Math.cos(theta);
+    target3D[i3+1] = r * Math.sin(phi) * Math.sin(theta);
+    target3D[i3+2] = r * Math.cos(phi);
+    // Galaxia (disco espiral)
+    let radius = 2.0 + Math.random() * 5.0;
+    let angle = radius * 0.8 + Math.random() * 0.5;
+    let spread = (Math.random() - 0.5) * 1.5;
+    targetGalaxia[i3] = radius * Math.cos(angle);
+    targetGalaxia[i3+1] = spread * 0.8;
+    targetGalaxia[i3+2] = radius * Math.sin(angle);
+    // Aurora (cortina ondulante)
+    let x = (Math.random() - 0.5) * 12;
+    let z = (Math.random() - 0.5) * 12;
+    targetAurora[i3] = x;
+    targetAurora[i3+1] = Math.sin(x * 0.5) * 2.5 + Math.cos(z * 0.5) * 2.5;
+    targetAurora[i3+2] = z;
+    // Fase aleatoria
+    randomPhase[i] = Math.random() * Math.PI * 2;
+    // Posición inicial = 1D
+    positions[i3] = target1D[i3];
+    positions[i3+1] = target1D[i3+1];
+    positions[i3+2] = target1D[i3+2];
+}
+
+neuralGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+neuralGeometry.setAttribute("aTarget1D", new THREE.BufferAttribute(target1D, 3));
+neuralGeometry.setAttribute("aTarget2D", new THREE.BufferAttribute(target2D, 3));
+neuralGeometry.setAttribute("aTarget3D", new THREE.BufferAttribute(target3D, 3));
+neuralGeometry.setAttribute("aTargetGalaxia", new THREE.BufferAttribute(targetGalaxia, 3));
+neuralGeometry.setAttribute("aTargetAurora", new THREE.BufferAttribute(targetAurora, 3));
+neuralGeometry.setAttribute("aRandomPhase", new THREE.BufferAttribute(randomPhase, 1));
+
+let neuralMaterial = new THREE.ShaderMaterial({
+    uniforms: customUniforms,
+    vertexShader: vertexShader,
+    fragmentShader: fragmentShader,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+let pointsMesh = new THREE.Points(neuralGeometry, neuralMaterial);
+scene.add(pointsMesh);
+
+// ===== TERRENO INFERIOR =====
+let meshGeo = new THREE.PlaneGeometry(35, 35, 45, 45);
+let meshMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true, transparent: true, opacity: 0.05 });
+let terrain = new THREE.Mesh(meshGeo, meshMat);
+terrain.rotation.x = -Math.PI / 2;
+terrain.position.y = -4;
+scene.add(terrain);
+
+// ===== CRISTALES =====
+let cristales = [];
+let cristalGeo = new THREE.OctahedronGeometry(0.2, 0);
+
+function crearCristal() {
+    let idx = Math.floor(Math.random() * COUNT);
+    let p = new THREE.Vector3(
+        positions[idx*3],
+        positions[idx*3+1],
+        positions[idx*3+2]
+    );
+    let col = modoDimension === 1 ? 0x00ffcc : (modoDimension === 2 ? 0xffffff : (modoDimension === 3 ? 0x00aaff : (modoDimension === 4 ? 0xff8800 : 0xcc44ff)));
+    let mat = new THREE.MeshBasicMaterial({ color: col, wireframe: true, transparent: true, opacity: 0.8 });
+    let mesh = new THREE.Mesh(cristalGeo, mat);
+    mesh.position.copy(p);
+    scene.add(mesh);
+    cristales.push(mesh);
+    // Sonido
+    if (audioContext) {
+        try {
+            let osc = audioContext.createOscillator();
+            let g = audioContext.createGain();
+            osc.frequency.value = 500 + Math.random() * 600;
+            g.gain.setValueAtTime(0.08, audioContext.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+            osc.connect(g);
+            g.connect(biquadFilter);
+            osc.start();
+            osc.stop(audioContext.currentTime + 0.5);
+        } catch(e) {}
+    }
+    guardar(`Cristal [${p.x.toFixed(1)}, ${p.y.toFixed(1)}]`);
+}
+
+// ============================================================
+// 5. CAPTURA DE PANTALLA
+// ============================================================
+function capturarFoto() {
+    composer.render();
+    let a = document.createElement("a");
+    a.download = `KRONOS_v8_${Date.now()}.png`;
+    a.href = renderer.domElement.toDataURL("image/png");
+    a.click();
+    guardar("Captura PNG guardada.");
+}
+
+// ============================================================
+// 6. CONTROLES DE TECLADO
+// ============================================================
+let teclas = {};
+window.addEventListener("keydown", e => {
+    let k = e.key.toLowerCase();
+    teclas[k] = true;
+    
+    if (e.key === "1") { modoDimension = 1; customUniforms.uDimension.value = 1.0; document.getElementById("txt-dimension").innerText = "1D FILAMENTO"; guardar("Modo 1D"); }
+    else if (e.key === "2") { modoDimension = 2; customUniforms.uDimension.value = 2.0; document.getElementById("txt-dimension").innerText = "2D BIG BANG"; guardar("Modo 2D"); }
+    else if (e.key === "3") { modoDimension = 3; customUniforms.uDimension.value = 3.0; document.getElementById("txt-dimension").innerText = "3D PAISAJE"; guardar("Modo 3D"); }
+    else if (e.key === "4") { modoDimension = 4; customUniforms.uDimension.value = 4.0; document.getElementById("txt-dimension").innerText = "🌌 GALAXIA"; guardar("Modo Galaxia"); }
+    else if (e.key === "5") { modoDimension = 5; customUniforms.uDimension.value = 5.0; document.getElementById("txt-dimension").innerText = "🌠 AURORA"; guardar("Modo Aurora"); }
+    else if (k === "q") {
+        customUniforms.uCuantico.value = customUniforms.uCuantico.value > 0.5 ? 0.0 : 1.0;
+        document.getElementById("txt-dimension").innerText = customUniforms.uCuantico.value > 0.5 ? "Ψ CUÁNTICO" : (["1D","2D","3D","Galaxia","Aurora"][modoDimension-1]);
+        guardar(`Cuántico: ${customUniforms.uCuantico.value > 0.5}`);
+    }
+    else if (k === "g") {
+        glitchActivo = glitchActivo > 0.5 ? 0.0 : 1.0;
+        customUniforms.uGlitch.value = glitchActivo;
+        guardar(`Glitch: ${glitchActivo > 0.5}`);
+    }
+    else if (k === "t") {
+        tormentaActiva = tormentaActiva > 0.5 ? 0.0 : 1.0;
+        customUniforms.uTormenta.value = tormentaActiva;
+        guardar(`Tormenta: ${tormentaActiva > 0.5}`);
+    }
+    else if (k === "c") {
+        customUniforms.uShockwaveTime.value = 0.0;
+        guardar("Onda de choque!");
+    }
+    else if (k === "r") {
+        controls.target.set(0,0,0);
+        camera.position.set(0, 2, 8);
+        controls.update();
+        guardar("Cámara reset.");
+    }
+    else if (e.key === " ") {
+        e.preventDefault();
+        crearCristal();
+    }
+    else if (k === "p") {
+        capturarFoto();
+    }
+});
+window.addEventListener("keyup", e => { teclas[e.key.toLowerCase()] = false; });
+
+// ============================================================
+// 7. CONTROLES DESLIZANTES (PANEL)
+// ============================================================
+document.getElementById("speedSlider").addEventListener("input", function() {
+    let val = parseFloat(this.value);
+    document.getElementById("speedVal").textContent = val.toFixed(2);
+    customUniforms.uSpeed.value = val;
+});
+document.getElementById("sizeSlider").addEventListener("input", function() {
+    let val = parseFloat(this.value);
+    document.getElementById("sizeVal").textContent = val.toFixed(1);
+    customUniforms.uSize.value = val;
+});
+document.getElementById("bloomSlider").addEventListener("input", function() {
+    let val = parseFloat(this.value);
+    document.getElementById("bloomVal").textContent = val.toFixed(2);
+    bloomPass.strength = val;
+});
+
+// ============================================================
+// 8. BUCLE PRINCIPAL DE ANIMACIÓN
+// ============================================================
+let lastTime = performance.now(), frameCount = 0;
+let clock = new THREE.Clock();
+
+function animar() {
+    requestAnimationFrame(animar);
+    let delta = clock.getDelta();
+    let time = clock.getElapsedTime();
+    frameCount++;
+    let now = performance.now();
+    if (now >= lastTime + 1000) {
+        document.getElementById("fps").innerText = Math.round((frameCount * 1000) / (now - lastTime));
+        frameCount = 0; lastTime = now;
+    }
+    
+    // Audio FFT
+    if (analyser && dataArray) {
+        analyser.getByteFrequencyData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+            sum += dataArray[i];
+            if (i < FFT_SIZE) {
+                let h = (dataArray[i] / 255) * 100;
+                fftBars[i].style.height = h + "%";
+            }
+        }
+        nivelAudio = sum / dataArray.length;
+        customUniforms.uAudio.value = nivelAudio;
+        osciladores.forEach(o => {
+            o.osc.frequency.setValueAtTime(o.base + (nivelAudio * 0.4), audioContext.currentTime);
+        });
+    }
+    
+    // Onda de choque
+    if (customUniforms.uShockwaveTime.value >= 0.0) {
+        customUniforms.uShockwaveTime.value += delta * 0.8;
+        if (customUniforms.uShockwaveTime.value > 1.0) {
+            customUniforms.uShockwaveTime.value = -1.0;
+        }
+    }
+    
+    customUniforms.uTime.value = time;
+    
+    // Terreno
+    let posArr = terrain.geometry.attributes.position.array;
+    for (let i = 0; i < posArr.length; i += 3) {
+        let x = posArr[i];
+        let z = posArr[i+1];
+        let d = Math.sqrt(x*x + z*z);
+        posArr[i+2] = Math.sin(d * 0.25 - time * 2.5) * (0.2 + (nivelAudio * 0.04));
+    }
+    terrain.geometry.attributes.position.needsUpdate = true;
+    
+    // Cristales
+    cristales.forEach((c, idx) => {
+        c.rotation.y += 0.04;
+        c.rotation.x += 0.02;
+        c.position.y += Math.sin(time * 3.0 + idx) * 0.003;
+    });
+    
+    // Controles y cámara
+    controls.update();
+    
+    // Render con Bloom
+    composer.render();
+}
+
+// ============================================================
+// 9. REDIMENSIONAMIENTO
+// ============================================================
+window.addEventListener('resize', () => {
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
+});
+
+// ============================================================
+// 10. INICIO
+// ============================================================
+guardar("SISTEMA KRONOS v8.0 INICIADO");
+animar();
+
+// Mensaje de bienvenida en consola para el desarrollador
+console.log("%c KRONOS v8.0 Commercial Edition ", "background: #00ffcc; color: #000; font-size: 16px; padding: 10px; border-radius: 4px;");
+console.log("%c Este producto está listo para ser vendido. Incluye: Shaders personalizados, Bloom, 5 modos visuales, audio interactivo y panel de control.", "color: #00ffcc; font-size: 12px;");
+</script>
+</body>
+</html>
