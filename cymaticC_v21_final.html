@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="folio" content="5204160405358537">
+<meta name="sha" content="a4ff808e">
+<meta name="trace" content="KRONOS-TRACE-PVA-5204160405358537-KRONOS-MT01JAAF">
+<title>CYMATIC STUDIO v21 · Singular Quantum Transcendence Engine</title>
+
+<!-- ===== FUENTES ===== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Space+Grotesk:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* ===== VARIABLES ===== */
+    :root {
+        --bg-color: #020308;
+        --accent-cyan: #00ffcc;
+        --accent-purple: #a855f7;
+        --accent-magenta: #ff00cc;
+        --accent-gold: #f0a030;
+        --text-main: #e2e8f0;
+        --text-muted: #64748b;
+        --glass-bg: rgba(2, 3, 8, 0.7);
+        --glass-border: rgba(0, 255, 204, 0.12);
+        --shadow-glow: 0 0 30px rgba(0, 255, 204, 0.05);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        overflow-x: hidden;
+        min-height: 100vh;
+        cursor: none;
+    }
+
+    /* ===== CANVAS DE FONDO (CIMÁTICO) ===== */
+    #canvas-kronos {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+        z-index: 1; pointer-events: auto;
+        cursor: none;
+    }
+    
+    .app-wrapper { 
+        position: relative; z-index: 2; width: 100%; min-height: 100vh;
+        pointer-events: none;
+    }
+    
+    .interactive-element { pointer-events: auto; }
+
+    /* ===== CURSOR PERSONALIZADO ===== */
+    .custom-cursor {
+        position: fixed; width: 20px; height: 20px;
+        border: 2px solid var(--accent-cyan);
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 999;
+        transform: translate(-50%, -50%);
+        transition: width 0.2s, height 0.2s, border-color 0.3s;
+        box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+        backdrop-filter: blur(2px);
+    }
+    .custom-cursor .inner {
+        position: absolute; top: 50%; left: 50%;
+        width: 4px; height: 4px;
+        background: var(--accent-cyan);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 10px rgba(0, 255, 204, 0.8);
+    }
+
+    /* ===== HEADER GLASSMORPHISM ===== */
+    .header {
+        position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+        padding: 18px 40px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-bottom: 1px solid var(--glass-border);
+        display: flex; justify-content: space-between; align-items: center;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    .logo {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.5rem; font-weight: 900; text-transform: uppercase;
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple), var(--accent-magenta), var(--accent-cyan));
+        background-size: 300% 300%;
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        animation: gradientShift 8s ease infinite;
+        letter-spacing: -1px;
+    }
+    
+    .logo span { font-weight: 300; opacity: 0.4; color: var(--text-main); -webkit-text-fill-color: initial; }
+    
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .nav-links { display: flex; gap: 30px; align-items: center; list-style: none; }
+    .nav-links a {
+        color: var(--text-muted); font-size: 0.85rem; font-weight: 600;
+        transition: color 0.3s ease, text-shadow 0.3s ease;
+        text-decoration: none;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.5px;
+    }
+    .nav-links a:hover { color: var(--accent-cyan); text-shadow: 0 0 15px rgba(0,255,204,0.5); }
+    
+    /* ===== DASHBOARD LAYOUT ===== */
+    .main-container {
+        max-width: 1400px; margin: 110px auto 40px; padding: 0 40px;
+        display: grid; grid-template-columns: 1fr 360px; gap: 30px;
+    }
+
+    /* ===== HERO PANEL ===== */
+    .hero-panel {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 40px;
+        backdrop-filter: blur(16px);
+        display: flex; flex-direction: column; justify-content: space-between;
+        position: relative; overflow: hidden;
+        box-shadow: var(--shadow-glow);
+    }
+    .hero-panel::before {
+        content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+        background: linear-gradient(to bottom, var(--accent-cyan), var(--accent-purple), var(--accent-magenta));
+        animation: pulseLine 4s ease-in-out infinite;
+    }
+    @keyframes pulseLine {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+    
+    .panel-tag {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: var(--accent-cyan);
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        margin-bottom: 20px;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .panel-tag::before {
+        content: ''; width: 6px; height: 6px;
+        background: var(--accent-cyan);
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 12px var(--accent-cyan);
+        animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot {
+        0%, 100% { opacity: 0.4; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    h1 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 3.8rem;
+        font-weight: 800;
+        line-height: 1.05;
+        letter-spacing: -2px;
+        margin-bottom: 16px;
+    }
+    h1 .highlight {
+        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-description {
+        color: var(--text-muted);
+        max-width: 600px;
+        line-height: 1.7;
+        font-size: 1.05rem;
+    }
+    .hero-description .trace-id {
+        color: var(--accent-purple);
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        text-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+    }
+
+    /* ===== SISTEMA DE ESTADO ===== */
+    .system-status {
+        display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 30px;
+    }
+    .status-card {
+        background: rgba(255,255,255,0.02);
+        border: 1px solid rgba(255,255,255,0.04);
+        border-radius: 12px;
+        padding: 18px 20px;
+        font-family: 'JetBrains Mono', monospace;
+        transition: border-color 0.3s, transform 0.3s;
+    }
+    .status-card:hover { 
+        border-color: rgba(0,255,204,0.2); 
+        transform: translateY(-2px);
+    }
+    .status-label {
+        font-size: 0.6rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+    .status-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-top: 6px;
+    }
+
+    /* ===== PANEL LATERAL DE CONTROL ===== */
+    .sidebar-panel {
+        background: var(--glass-bg); 
+        border: 1px solid var(--glass-border);
+        border-radius: 20px; 
+        padding: 30px; 
+        backdrop-filter: blur(16px);
+        display: flex; flex-direction: column; gap: 28px;
+        box-shadow: var(--shadow-glow);
+    }
+    .sidebar-panel h3 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.3rem; font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    .control-group {
+        display: flex; flex-direction: column; gap: 10px;
+    }
+    .control-group label {
+        font-size: 0.7rem; color: var(--text-muted);
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase; letter-spacing: 1px;
+        display: flex; justify-content: space-between;
+    }
+    .control-group label span { color: var(--accent-cyan); }
+
+    /* Sliders personalizados */
+    .range-input {
+        width: 100%; -webkit-appearance: none; appearance: none;
+        background: rgba(255,255,255,0.05); height: 6px; border-radius: 3px;
+        outline: none; transition: background 0.3s;
+    }
+    .range-input::-webkit-slider-thumb {
+        -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+        border-radius: 50%; background: var(--accent-cyan); cursor: pointer;
+        box-shadow: 0 0 10px var(--accent-cyan); transition: transform 0.1s;
+    }
+    .range-input::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+    /* Botón de acción interactivo */
+    .btn-action {
+        width: 100%; padding: 16px; border-radius: 10px; border: none;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-magenta));
+        background-size: 200% auto; color: #020308; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.8rem;
+        cursor: pointer; transition: all 0.4s ease;
+        box-shadow: 0 4px 15px rgba(0, 255, 204, 0.2);
+    }
+    .btn-action:hover {
+        background-position: right center;
+        transform: translateY(-2px);
+        box-shadow: 0 0 25px rgba(255, 0, 204, 0.4);
+    }
+
+    /* ===== RESPONSIVIDAD ===== */
+    @media (max-width: 1024px) {
+        .main-container { grid-template-columns: 1fr; margin-top: 100px; padding: 0 20px; }
+        h1 { font-size: 2.8rem; }
+        body { cursor: auto; }
+        .custom-cursor, #canvas-kronos { cursor: auto; }
+    }
+</style>
+</head>
+<body>
+
+<!-- Cursor Cuántico -->
+  CYMATICSTUDIO v21// QUANTUM CORE// MATRIX// TRACE LOGSFrecuenciasFrecuencia Base 50HzAmplitud Resonante 100Complejidad de Ondas 45Inicializar Motor Audio// 1. GESTIÓN DEL CURSOR PERSONALIZADOconst cursor = document.getElementById('k-cursor');let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2;let ballX = mouseX, ballY = mouseY;const speed = 0.15; // Coeficiente de fricción físicawindow.addEventListener('mousemove', (e) => {mouseX = e.clientX;mouseY = e.clientY;});// Cambios dinámicos del cursor al pasar por elementos interactivosdocument.querySelectorAll('.interactive-element, a, input, button').forEach(el => {el.addEventListener('mouseenter', () => {cursor.style.width = '40px';cursor.style.height = '40px';cursor.style.borderColor = 'var(--accent-magenta)';});el.addEventListener('mouseleave', () => {cursor.style.width = '20px';cursor.style.height = '20px';cursor.style.borderColor = 'var(--accent-cyan)';});});// 2. MOTOR GRAFICO DE INTERFERENCIA CIMÁTICAconst canvas = document.getElementById('canvas-kronos');const ctx = canvas.getContext('2d');let width = canvas.width = window.innerWidth;let height = canvas.height = window.innerHeight;window.addEventListener('resize', () => {width = canvas.width = window.innerWidth;height = canvas.height = window.innerHeight;});// Controles HUD vinculadosconst sliderFreq = document.getElementById('slider-freq');const sliderAmp = document.getElementById('slider-amp');const sliderLines = document.getElementById('slider-lines');const valFreq = document.getElementById('val-freq');const valAmp = document.getElementById('val-amp');const valLines = document.getElementById('val-lines');let lineCount = parseInt(sliderLines.value);let baseFrequencyModifier = parseFloat(sliderFreq.value) / 10000;let baseAmplitude = parseFloat(sliderAmp.value);// Eventos de sliders actualizados en tiempo realsliderFreq.addEventListener('input', (e) => {valFreq.innerText = e.target.value + 'Hz';baseFrequencyModifier = parseFloat(e.target.value) / 10000;updateAudioFreq(parseFloat(e.target.value));});sliderAmp.addEventListener('input', (e) => {valAmp.innerText = e.target.value;baseAmplitude = parseFloat(e.target.value);});sliderLines.addEventListener('input', (e) => {valLines.innerText = e.target.value;lineCount = parseInt(e.target.value);});// 3. MOTOR AUDIO SINTETIZADOR CUÁNTICO (Web Audio API)let audioCtx = null;let mainOscillator = null;let subOscillator = null;let mainGain = null;const engineStatus = document.getElementById('engine-status');function initAudio() {if (audioCtx) return; // Evita duplicar instanciasaudioCtx = new (window.AudioContext || window.webkitAudioContext)();mainGain = audioCtx.createGain();mainGain.gain.setValueAtTime(0.05, audioCtx.currentTime); // Volumen controlado seguromainOscillator = audioCtx.createOscillator();mainOscillator.type = 'sine';mainOscillator.frequency.setValueAtTime(parseFloat(sliderFreq.value) * 2, audioCtx.currentTime);subOscillator = audioCtx.createOscillator();subOscillator.type = 'triangle';subOscillator.frequency.setValueAtTime(parseFloat(sliderFreq.value), audioCtx.currentTime);// Enrutamiento cuánticomainOscillator.connect(mainGain);subOscillator.connect(mainGain);mainGain.connect(audioCtx.destination);mainOscillator.start();subOscillator.start();engineStatus.innerText = 'ONLINE';engineStatus.style.color = 'var(--accent-cyan)';document.getElementById('btn-sync').innerText = 'Sincronía Forzada';}function updateAudioFreq(frequency) {if (!audioCtx) return;mainOscillator.frequency.setTargetAtTime(frequency * 2, audioCtx.currentTime, 0.1);subOscillator.frequency.setTargetAtTime(frequency, audioCtx.currentTime, 0.1);}function modulateAudioWithMouse(xFactor, yFactor) {if (!audioCtx) return;// Modulación espacial: el eje X cambia ligeramente el Pitch Armónico, el eje Y cambia la ganancialet targetFreq = (parseFloat(sliderFreq.value) * 2) + (xFactor * 100);mainOscillator.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.1);let targetGain = 0.02 + (yFactor * 0.06);mainGain.gain.setTargetAtTime(targetGain, audioCtx.currentTime, 0.1);}// Inicializar audio en clics de la interfazdocument.getElementById('btn-sync').addEventListener('click', initAudio);window.addEventListener('click', () => { if(!audioCtx) initAudio(); });// 4. LOOP PRINCIPAL DE RENDERIZADO (ANIMATION TICK)let phaseOffset = 0;function render() {// Efecto barrido de vectores (Motion blur digital)ctx.fillStyle = 'rgba(2, 3, 8, 0.08)';ctx.fillRect(0, 0, width, height);// Física suave aplicada al cursorballX += (mouseX - ballX) * speed;ballY += (mouseY - ballY) * speed;cursor.style.left = ballX + 'px';cursor.style.top = ballY + 'px';phaseOffset += 0.004;// Modulación del sintetizador de audio basada en coordenadas relativasmodulateAudioWithMouse(ballX / width, 1 - (ballY / height));// Renderizado del entramado de ondasfor (let i = 0; i < lineCount; i++) {let currentLineY = (height / lineCount) * i;let speedFactor = 0.002 + (i * 0.0005);let wavePhase = phaseOffset + (i * 0.15);ctx.beginPath();ctx.lineWidth = (i % 4 === 0) ? 1.5 : 0.6;// Generación de gradiente adaptativo y dinámicolet dynamicGradient = ctx.createLinearGradient(0, 0, width, 0);dynamicGradient.addColorStop(0, 'rgba(168, 85, 247, 0.15)'); // Púrpura de entradadynamicGradient.addColorStop(ballX / width, 'rgba(0, 255, 204, 0.55)'); // Punto de quiebre en el cursordynamicGradient.addColorStop(1, 'rgba(255, 0, 204, 0.15)'); // Magenta de salidactx.strokeStyle = dynamicGradient;for (let x = 0; x < width; x += 15) {// Algoritmo de interferencia cuántica respecto al cursor físicolet distanceToMouse = Math.abs(x - ballX);let influenceArea = Math.max(0, (350 - distanceToMouse) / 350);// Ondas matemáticas puras moduladaslet y = currentLineY + Math.sin(x * baseFrequencyModifier + wavePhase) * (baseAmplitude * 0.4);// Inyección de deformación magnética del mousey += Math.sin(x * 0.015 + wavePhase * 1.8) * (60 * influenceArea) * (1 - Math.abs(ballY - currentLineY)/height);if (x === 0) ctx.moveTo(x, y);else ctx.lineTo(x, y);}ctx.stroke();}requestAnimationFrame(render);}// Encendido del motor gráficorender();
